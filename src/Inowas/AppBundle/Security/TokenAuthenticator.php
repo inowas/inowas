@@ -4,6 +4,7 @@ namespace Inowas\AppBundle\Security;
 
 use Doctrine\ORM\EntityManager;
 use FOS\UserBundle\Doctrine\UserManager;
+use Ramsey\Uuid\Uuid;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -53,6 +54,11 @@ class TokenAuthenticator extends AbstractGuardAuthenticator
     {
         if (!$token = $request->headers->get('X-AUTH-TOKEN')) {
             // no token? Return null and no other methods will be called
+            return null;
+        }
+
+        if (! Uuid::isValid($token)) {
+            // token is not a valid uuid? Return null and no other methods will be called
             return null;
         }
 
@@ -131,7 +137,7 @@ class TokenAuthenticator extends AbstractGuardAuthenticator
             // $this->translator->trans($exception->getMessageKey(), $exception->getMessageData())
         );
 
-        return new JsonResponse($data, 403);
+        return new JsonResponse($data, 401);
     }
 
     /**

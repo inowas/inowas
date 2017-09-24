@@ -9,6 +9,7 @@ use Inowas\Common\Id\UserId;
 use Inowas\Common\Modflow\LengthUnit;
 use Prooph\EventSourcing\AggregateChanged;
 
+/** @noinspection LongInheritanceChainInspection */
 class LengthUnitWasUpdated extends AggregateChanged
 {
 
@@ -45,7 +46,7 @@ class LengthUnitWasUpdated extends AggregateChanged
         return $this->lengthUnit;
     }
 
-    public function modflowId(): ModflowId
+    public function modelId(): ModflowId
     {
         if ($this->modflowModelId === null){
             $this->modflowModelId = ModflowId::fromString($this->aggregateId());

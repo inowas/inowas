@@ -28,7 +28,7 @@ class ActiveCellsTest extends \PHPUnit_Framework_TestCase
         $activeCells = ActiveCells::fromArrayAndGridSize($arr, $gridSize);
         $this->assertInstanceOf(ActiveCells::class, $activeCells);
         $this->assertEquals($expectedArr, $activeCells->layerData());
-        $this->assertEquals($expectedArr, $activeCells->fullArray());
+        $this->assertEquals($expectedArr, $activeCells->to2DArray());
     }
 
     public function test_from_not_full_array_and_gridsize(): void
@@ -50,7 +50,7 @@ class ActiveCellsTest extends \PHPUnit_Framework_TestCase
         $activeCells = ActiveCells::fromArrayAndGridSize($arr, $gridSize);
         $this->assertInstanceOf(ActiveCells::class, $activeCells);
         $this->assertEquals($arr, $activeCells->layerData());
-        $this->assertEquals($fullArr, $activeCells->fullArray());
+        $this->assertEquals($fullArr, $activeCells->to2DArray());
     }
 
     public function test_to_cells(): void

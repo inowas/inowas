@@ -30,5 +30,6 @@ final class RemoveHorizonFromBoreLogHandler
         }
 
         $boreLog->removeHorizon($command->userId(), $command->horizonId());
+        $this->boreLogList->save($boreLog);
     }
 }

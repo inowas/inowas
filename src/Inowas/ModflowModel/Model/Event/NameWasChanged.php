@@ -6,23 +6,24 @@ namespace Inowas\ModflowModel\Model\Event;
 
 use Inowas\Common\Id\ModflowId;
 use Inowas\Common\Id\IdInterface;
-use Inowas\Common\Modflow\ModelName;
+use Inowas\Common\Modflow\Name;
 use Inowas\Common\Id\UserId;
 use Prooph\EventSourcing\AggregateChanged;
 
+/** @noinspection LongInheritanceChainInspection */
 class NameWasChanged extends AggregateChanged
 {
 
     /** @var  IdInterface */
     private $modflowId;
 
-    /** @var ModelName */
+    /** @var Name */
     private $name;
 
     /** @var UserId */
     private $userId;
 
-    public static function byUserWithName(UserId $userId, IdInterface $modflowId, ModelName $name): NameWasChanged
+    public static function byUserWithName(UserId $userId, IdInterface $modflowId, Name $name): NameWasChanged
     {
         $event = self::occur(
             $modflowId->toString(), [
@@ -34,11 +35,10 @@ class NameWasChanged extends AggregateChanged
         $event->userId = $userId;
         $event->modflowId = $modflowId;
         $event->name = $name;
-
         return $event;
     }
 
-    public function modflowId(): IdInterface
+    public function modelId(): IdInterface
     {
         if ($this->modflowId === null){
             $this->modflowId = ModflowId::fromString($this->aggregateId());
@@ -56,10 +56,10 @@ class NameWasChanged extends AggregateChanged
         return $this->userId;
     }
 
-    public function name(): ModelName
+    public function name(): Name
     {
         if ($this->name === null){
-            $this->name = ModelName::fromString($this->payload['name']);
+            $this->name = Name::fromString($this->payload['name']);
         }
 
         return $this->name;

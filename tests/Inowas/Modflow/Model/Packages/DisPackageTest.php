@@ -3,17 +3,18 @@
 namespace Tests\Inowas\Modflow\Model\Packages;
 
 use Inowas\Common\DateTime\DateTime;
-use Inowas\Common\Modflow\Botm;
+use Inowas\Common\Grid\Distance;
+use Inowas\Common\Grid\Nlay;
 use Inowas\Common\Grid\BoundingBox;
 use Inowas\Common\Grid\Ncol;
 use Inowas\Common\Grid\Delc;
 use Inowas\Common\Grid\Delr;
 use Inowas\Common\Grid\GridSize;
 use Inowas\Common\Grid\Laycbd;
-use Inowas\Common\Grid\LayerNumber;
+use Inowas\Common\Grid\Nrow;
 use Inowas\Common\Grid\Proj4str;
 use Inowas\Common\Grid\Rotation;
-use Inowas\Common\Grid\Nrow;
+use Inowas\Common\Modflow\Botm;
 use Inowas\Common\Modflow\Top;
 use Inowas\Common\Modflow\Extension;
 use Inowas\Common\Modflow\LengthUnit;
@@ -34,7 +35,7 @@ class DisPackageTest extends \PHPUnit_Framework_TestCase
     public function test_create_from_params(){
 
         // DEFAULTS
-        $nLay = LayerNumber::fromInteger(1);
+        $nLay = Nlay::fromInt(1);
         $nCol = Ncol::fromInt(1);
         $nRow = Nrow::fromInt(1);
         $nPer = Nper::fromInteger(1);
@@ -95,9 +96,9 @@ class DisPackageTest extends \PHPUnit_Framework_TestCase
 
         /** @var DisPackage $disPackage */
         $disPackage = DisPackage::fromDefaults();
-        $boundingBox = BoundingBox::fromCoordinates(1,2,3,4,4265, 700, 1200);
+        $boundingBox = BoundingBox::fromCoordinates(1,2,3,4);
         $gridSize = GridSize::fromXY(7, 12);
-        $disPackage = $disPackage->updateGridParameters($gridSize, $boundingBox);
+        $disPackage = $disPackage->updateGridParameters($gridSize, $boundingBox, Distance::fromMeters(700), Distance::fromMeters(1200));
 
         $expectedNRow = Nrow::fromInt(12);
         $expectedNCol = Ncol::fromInt(7);

@@ -32,5 +32,6 @@ final class DeleteScenarioHandler
         }
 
         $scenarioAnalysis->deleteScenario($command->userId(), $command->scenarioId());
+        $this->scenarioAnalysisList->save($scenarioAnalysis);
     }
 }

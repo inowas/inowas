@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace tests\Inowas\ModflowCalculation\Model;
 
-use Inowas\ModflowCalculation\Model\ModflowCalculationReadDataResponse;
+use Inowas\ModflowModel\Model\AMQP\ReadDataResponse;
 
 class FlopyReadTimeseriesResponseTest extends \PHPUnit_Framework_TestCase
 {
@@ -34,7 +34,7 @@ class FlopyReadTimeseriesResponseTest extends \PHPUnit_Framework_TestCase
         }';
 
 
-        $response = ModflowCalculationReadDataResponse::fromJson($json);
+        $response = ReadDataResponse::fromJson($json);
         $this->assertTrue($response->statusCode()->ok());
         $this->assertEquals(200, $response->statusCode()->toInt());
 

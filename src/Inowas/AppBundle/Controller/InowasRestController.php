@@ -58,10 +58,10 @@ class InowasRestController extends FOSRestController
         return array_key_exists($key, $content);
     }
 
-    protected function getValueByKey(string $key, array $content): string
+    protected function getValueByKey(string $key, array $content): ?string
     {
         $this->assertContainsKey($key, $content);
-        return $content['$key'];
+        return $content[$key];
     }
 
     protected function assertGeometryIsValid(array $geometry): void

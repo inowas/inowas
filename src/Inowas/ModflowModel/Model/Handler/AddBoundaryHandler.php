@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Inowas\ModflowModel\Model\Handler;
 
-use Inowas\GeoTools\Service\GeoTools;
 use Inowas\ModflowModel\Model\Command\AddBoundary;
 use Inowas\ModflowModel\Model\Exception\ModflowModelNotFoundException;
 use Inowas\ModflowModel\Model\Exception\WriteAccessFailedException;
@@ -17,33 +16,29 @@ final class AddBoundaryHandler
     /** @var  ModflowModelList */
     private $modelList;
 
-    /** @var  GeoTools */
-    private $geoTools;
-
     /**
-     * AddBoundaryHandler constructor.
+     * ChangeModflowModelBoundingBoxHandler constructor.
      * @param ModflowModelList $modelList
-     * @param GeoTools $geoTools
      */
-    public function __construct(ModflowModelList $modelList, GeoTools $geoTools)
-    {
-        $this->geoTools = $geoTools;
+    public function __construct(ModflowModelList $modelList) {
         $this->modelList = $modelList;
     }
 
     public function __invoke(AddBoundary $command)
     {
         /** @var ModflowModelAggregate $modflowModel */
-        $modflowModel = $this->modelList->get($command->modelId());
+        $modflowModel = $this->modelList->get($command->modflowModelId());
 
         if (!$modflowModel){
-            throw ModflowModelNotFoundException::withModelId($command->modelId());
+            throw ModflowModelNotFoundException::withModelId($command->modflowModelId());
         }
 
-        if (! $modflowModel->ownerId()->sameValueAs($command->userId())){
-            throw WriteAccessFailedException::withUserAndOwner($command->userId(), $modflowModel->ownerId());
+        if (! $modflowModel->userId()->sameValueAs($command->userId())){
+            throw WriteAccessFailedException::withUserAndOwner($command->userId(), $modflowModel->userId());
         }
 
-        $modflowModel->addBoundaryToModel($command->userId(), $command->boundary());
+        $modflowModel->addBoundary($command->userId(), $command->boundary());
+
+        $this->modelList->save($modflowModel);
     }
 }

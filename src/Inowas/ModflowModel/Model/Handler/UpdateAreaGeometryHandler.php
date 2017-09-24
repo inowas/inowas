@@ -4,10 +4,7 @@ declare(strict_types=1);
 
 namespace Inowas\ModflowModel\Model\Handler;
 
-use Inowas\Common\Boundaries\Area;
-use Inowas\Common\Boundaries\BoundaryName;
-use Inowas\Common\Id\BoundaryId;
-use Inowas\GeoTools\Service\GeoTools;
+use Inowas\ModflowModel\Infrastructure\Projection\ModelList\ModelFinder;
 use Inowas\ModflowModel\Model\Command\UpdateAreaGeometry;
 use Inowas\ModflowModel\Model\Exception\ModflowModelNotFoundException;
 use Inowas\ModflowModel\Model\Exception\WriteAccessFailedException;
@@ -20,18 +17,18 @@ final class UpdateAreaGeometryHandler
     /** @var  ModflowModelList */
     private $modelList;
 
-    /** @var GeoTools */
-    private $geoTools;
+    /** @var ModelFinder */
+    private $modelFinder;
 
     /**
      * UpdateAreaGeometryHandler constructor.
      * @param ModflowModelList $modelList
-     * @param GeoTools $geoTools
+     * @param ModelFinder $modelFinder
      */
-    public function __construct(ModflowModelList $modelList, GeoTools $geoTools)
+    public function __construct(ModflowModelList $modelList, ModelFinder $modelFinder)
     {
         $this->modelList = $modelList;
-        $this->geoTools = $geoTools;
+        $this->modelFinder = $modelFinder;
     }
 
     public function __invoke(UpdateAreaGeometry $command)
@@ -43,10 +40,15 @@ final class UpdateAreaGeometryHandler
             throw ModflowModelNotFoundException::withModelId($command->modelId());
         }
 
-        if (! $modflowModel->ownerId()->sameValueAs($command->userId())){
-            throw WriteAccessFailedException::withUserAndOwner($command->userId(), $modflowModel->ownerId());
+        if (! $modflowModel->userId()->sameValueAs($command->userId())){
+            throw WriteAccessFailedException::withUserAndOwner($command->userId(), $modflowModel->userId());
         }
 
-        $modflowModel->changeAreaGeometry($command->userId(), $command->geometry());
+        $polygon = $this->modelFinder->getAreaPolygonByModflowModelId($command->modelId());
+
+        if (! $polygon->sameAs($command->geometry())){
+            $modflowModel->updateAreaGeometry($command->userId(), $command->geometry());
+            $this->modelList->save($modflowModel);
+        }
     }
 }

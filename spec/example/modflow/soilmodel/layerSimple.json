@@ -1,0 +1,16 @@
+{
+    "id": "l0",
+    "name": "Name Layer 0",
+    "description": "Description Layer 0",
+    "number": 0,
+    "top": 10.0,
+    "botm": 5.0,
+    "hk": 100.0,
+    "hani": 1,
+    "vka": 10,
+    "layavg": 0,
+    "laytyp": 1,
+    "laywet": 0,
+    "ss": 1e-5,
+    "sy": 0.15
+}

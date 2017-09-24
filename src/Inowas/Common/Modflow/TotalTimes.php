@@ -9,12 +9,12 @@ use Inowas\Common\DateTime\DateTime;
 final class TotalTimes implements \JsonSerializable
 {
     /** @var array */
-    private $totalTimes = [];
+    private $totalTimes;
 
-    /** @var TimeUnit  */
+    /** @var TimeUnit */
     private $timeUnit;
 
-    /** @var DateTime  */
+    /** @var DateTime */
     private $start;
 
     public static function create(DateTime $start, TimeUnit $timeUnit, array $times): TotalTimes
@@ -28,12 +28,17 @@ final class TotalTimes implements \JsonSerializable
         $this->totalTimes = $times;
     }
 
-    public function jsonSerialize(): array
+    public function toArray(): array
     {
         return array(
-            "start_date_time" => $this->start->toAtom(),
-            "time_unit" => $this->timeUnit->toInt(),
-            "total_times" => $this->totalTimes
+            'start_date_time' => $this->start->toAtom(),
+            'time_unit' => $this->timeUnit->toInt(),
+            'total_times' => $this->totalTimes
         );
+    }
+
+    public function jsonSerialize(): array
+    {
+        return $this->toArray();
     }
 }

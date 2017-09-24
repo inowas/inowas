@@ -4,34 +4,27 @@ declare(strict_types=1);
 
 namespace Inowas\Common\Id;
 
-use Ramsey\Uuid\Uuid;
-
-class BoundaryId implements IdInterface
+class BoundaryId
 {
-    /** @var  Uuid */
-    private $uuid;
-
-    public static function generate(): BoundaryId
-    {
-        return new self(Uuid::uuid4());
-    }
+    /** @var string */
+    private $id;
 
     public static function fromString(string $id): BoundaryId
     {
-        return new self(Uuid::fromString($id));
+        return new self($id);
     }
 
-    private function __construct(Uuid $uuid)
+    private function __construct(string $id)
     {
-        $this->uuid = $uuid;
+        $this->id = $id;
     }
 
     public function toString(): string
     {
-        return $this->uuid->toString();
+        return $this->id;
     }
 
-    public function sameValueAs(IdInterface $other): bool
+    public function sameValueAs(BoundaryId $other): bool
     {
         return $this->toString() === $other->toString();
     }

@@ -6,7 +6,7 @@ namespace Inowas\ScenarioAnalysis\Model;
 
 interface ScenarioAnalysisList
 {
-    public function add(ScenarioAnalysisAggregate $scenarioAnalysis);
-
     public function get(ScenarioAnalysisId $scenarioAnalysisId);
+
+    public function save(ScenarioAnalysisAggregate $scenarioAnalysis);
 }

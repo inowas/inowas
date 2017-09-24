@@ -1,0 +1,28 @@
+{
+    "start_date_time": "2005-01-01T00:00:00+00:00",
+    "end_date_time": "2010-12-31T00:00:00+00:00",
+    "time_unit": 2,
+    "stress_periods": [
+        {
+            "totim_start": 0,
+            "perlen": 31,
+            "nstp": 1,
+            "tsmult": 1,
+            "steady": true
+        },
+        {
+            "totim_start": 31,
+            "perlen": 27,
+            "nstp": 1,
+            "tsmult": 1,
+            "steady": false
+        },
+        {
+            "totim_start": 52,
+            "perlen": 31,
+            "nstp": 1,
+            "tsmult": 1,
+            "steady": false
+        }
+    ]
+}

@@ -22,7 +22,7 @@ class ToolFinder
     public function findPublic(): array
     {
         $results = $this->connection->fetchAll(
-            sprintf('SELECT id, name, description, project, application, tool, created_at, user_id, user_name, created_at, public FROM %s WHERE public = true', Table::TOOL_LIST)
+            sprintf('SELECT id, name, description, project, application, tool, created_at, user_id, user_name, created_at, public FROM %s WHERE public = 1', Table::TOOL_LIST)
         );
 
         if ($results === false) {
@@ -35,7 +35,7 @@ class ToolFinder
     public function findPublicByType(ToolType $toolType): array
     {
         $results = $this->connection->fetchAll(
-            sprintf('SELECT id, name, description, project, application, tool, created_at, user_id, user_name, created_at, public FROM %s WHERE public = true AND tool = :tool', Table::TOOL_LIST),
+            sprintf('SELECT id, name, description, project, application, tool, created_at, user_id, user_name, created_at, public FROM %s WHERE public = 1 AND tool = :tool', Table::TOOL_LIST),
             ['tool' => $toolType->toString()]
         );
 
@@ -113,7 +113,7 @@ class ToolFinder
             return false;
         }
 
-        return $result['public'];
+        return $result['public'] === 1;
     }
 
     public function isToolOwner(ToolId $toolId, UserId $userId): bool
@@ -130,7 +130,7 @@ class ToolFinder
     {
         $result = $this->connection->fetchAssoc(
             sprintf('SELECT count(user_id) FROM %s WHERE (id = :id AND user_id = :user_id) OR (id = :id AND public = :public)', Table::TOOL_LIST),
-            ['id' => $toolId->toString(), 'user_id' => $userId->toString(), 'public' => true]
+            ['id' => $toolId->toString(), 'user_id' => $userId->toString(), 'public' => 1]
         );
 
         return $result['count'] > 0;

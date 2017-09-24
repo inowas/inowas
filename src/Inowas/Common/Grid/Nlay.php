@@ -9,7 +9,7 @@ class Nlay
     /** @var int */
     private $number;
 
-    public static function fromInteger(int $number): Nlay
+    public static function fromInt(int $number): Nlay
     {
         return new self($number);
     }
@@ -19,7 +19,7 @@ class Nlay
         $this->number = $number;
     }
 
-    public function toInteger(): int
+    public function toInt(): int
     {
         return $this->number;
     }

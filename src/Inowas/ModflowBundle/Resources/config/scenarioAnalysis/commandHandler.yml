@@ -14,6 +14,12 @@ services:
         arguments:
          - '@scenarioanalysis_list'
 
+    inowas.scenarioanalysis.update_scenarioanalysis_handler:
+        class: Inowas\ScenarioAnalysis\Model\Handler\UpdateScenarioAnalysisHandler
+        arguments:
+         - '@scenarioanalysis_list'
+         - '@inowas.scenarioanalysis.scenarioanalysis_finder'
+
     inowas.scenarioanalysis.create_scenario_handler:
         class: Inowas\ScenarioAnalysis\Model\Handler\CreateScenarioHandler
         arguments:

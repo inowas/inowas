@@ -4,83 +4,95 @@ declare(strict_types=1);
 
 namespace Inowas\Common\Boundaries;
 
+use Inowas\Common\DateTime\DateTime;
 use Inowas\Common\Geometry\Geometry;
+use Inowas\Common\Geometry\Point;
 use Inowas\Common\Id\ObservationPointId;
+use Inowas\Common\Modflow\Name;
 
 class ObservationPoint implements \JsonSerializable
 {
-
     /** @var  ObservationPointId */
     protected $id;
 
-    /** @var  Geometry */
+    /** @var  Point */
     protected $geometry;
 
-    /** @var  ObservationPointName */
+    /** @var  Name */
     protected $name;
 
-    /** @var  array */
-    protected $dateTimeValues = [];
+    /** @var  BoundaryType */
+    protected $type;
 
-    public static function fromIdNameAndGeometry(ObservationPointId $id, ObservationPointName $name, Geometry $geometry): ObservationPoint
+    /** @var  DateTimeValuesCollection */
+    protected $dateTimeValuesCollection;
+
+    /** @noinspection MoreThanThreeArgumentsInspection
+     * @param ObservationPointId $id
+     * @param BoundaryType $type
+     * @param Name $name
+     * @param Point $geometry
+     * @return ObservationPoint
+     */
+    public static function fromIdTypeNameAndGeometry(ObservationPointId $id, BoundaryType $type, Name $name, Point $geometry): ObservationPoint
     {
-        return new self($id, $name, $geometry);
+        $self = new self($id, $type, $name, $geometry);
+        $self->dateTimeValuesCollection = DateTimeValuesCollection::create();
+        return $self;
     }
 
-    private function __construct(ObservationPointId $id, ObservationPointName $name, ?Geometry $geometry = null)
+    public static function fromArray(array $arr, BoundaryType $type): ObservationPoint
+    {
+        $self = new self(
+            ObservationPointId::fromString($arr['id']),
+            $type,
+            Name::fromString($arr['name']),
+            Geometry::fromArray($arr['geometry'])->getPoint()
+        );
+
+        $self->dateTimeValuesCollection = DateTimeValuesCollection::fromTypeAndArray($type, $arr['date_time_values']);
+        return $self;
+    }
+
+    private function __construct(ObservationPointId $id, BoundaryType $type, Name $name, Point $geometry)
     {
         $this->id = $id;
         $this->name = $name;
         $this->geometry = $geometry;
+        $this->type = $type;
     }
 
     public function addDateTimeValue(DateTimeValue $dateTimeValue): ObservationPoint
     {
-        $this->dateTimeValues[] = $dateTimeValue;
-        $self = new self($this->id, $this->name, $this->geometry);
-        $self->dateTimeValues = $this->dateTimeValues;
+        $this->dateTimeValuesCollection->add($dateTimeValue);
+        $self = new self($this->id, $this->type, $this->name, $this->geometry);
+        $self->dateTimeValuesCollection = $this->dateTimeValuesCollection;
         return $self;
     }
 
-    public function id(): ObservationPointId
+    public function type(): BoundaryType
     {
-        return $this->id;
+        return $this->type;
     }
 
-    public function geometry(): ?Geometry
+    public function geometry(): Point
     {
         return $this->geometry;
     }
 
-    public function geometryArray(): ?array
-    {
-        return ($this->geometry instanceof Geometry) ? $this->geometry->toArray() : null;
-    }
-
-    public function geometryJson(): string
-    {
-        return ($this->geometry instanceof Geometry) ? $this->geometry->toJson() : "{}";
-    }
-
-    public function name(): ObservationPointName
+    public function name(): Name
     {
         return $this->name;
     }
 
-    public function dateTimeValues(): array
+    public function getDateTimes(): array
     {
-        return $this->dateTimeValues;
+        return $this->dateTimeValues()->getDateTimes();
     }
 
-    public function dateTimeValuesDescription(): array
+    public function dateTimeValues(): DateTimeValuesCollection
     {
-        if (count($this->dateTimeValues()) > 0) {
-            /** @var DateTimeValue $dateTimeValue */
-            $dateTimeValue = $this->dateTimeValues[0];
-            return $dateTimeValue->valuesDescription();
-        }
-
-        return [];
+        return $this->dateTimeValuesCollection;
     }
 
     public function toArray(): array
@@ -88,51 +100,29 @@ class ObservationPoint implements \JsonSerializable
         return array(
             'id' => $this->id->toString(),
             'name' => $this->name()->toString(),
-            'geometry' => $this->geometryArray(),
-            'date_time_values' => $this->dateTimeValues
+            'geometry' => Geometry::fromPoint($this->geometry)->toArray(),
+            'type' => $this->type->toString(),
+            'date_time_values' => $this->dateTimeValuesCollection->toArray()
         );
     }
 
     public function jsonSerialize(): array
     {
-        $valuesDescription = [];
-        if (count($this->dateTimeValues()) > 0) {
-            /** @var DateTimeValue $dateTimeValue */
-            $dateTimeValue = $this->dateTimeValues[0];
-            $valuesDescription = $dateTimeValue->valuesDescription();
-        }
-
         return array(
             'id' => $this->id->toString(),
             'name' => $this->name()->toString(),
-            'geometry' => $this->geometryArray(),
-            'values_description' => $valuesDescription,
-            'values' => $this->dateTimeValues
+            'geometry' => $this->geometry->toArray(),
+            'values' => $this->dateTimeValuesCollection
         );
     }
 
-    public function findValueByDateTime(\DateTimeImmutable $dateTime): ?DateTimeValue
+    public function findValueByDateTime(DateTime $dateTime): ?DateTimeValue
     {
+        return $this->dateTimeValues()->findValueByDateTime($dateTime);
+    }
 
-        $values = $this->dateTimeValues();
-        usort($values, function ($v1, $v2) {
-
-            /** @var $v1 DateTimeValue */
-            $dtV1 = $v1->dateTime();
-
-            /** @var $v2 DateTimeValue */
-            $dtV2 = $v2->dateTime();
-
-            return ($dtV1 < $dtV2) ? +1 : -1;
-        });
-
-        /** @var DateTimeValue $value */
-        foreach ($values as $value) {
-            if ($dateTime >= $value->dateTime()){
-                return $value;
-            }
-        }
-
-        return null;
+    public function id(): ObservationPointId
+    {
+        return $this->id;
     }
 }

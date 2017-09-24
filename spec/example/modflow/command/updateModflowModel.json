@@ -1,0 +1,31 @@
+{
+    "uuid": "ecc23a8e-d6e6-4a24-af4e-c6bec5a5cc73",
+    "message_name": "updateModflowModel",
+    "metadata": {},
+    "payload": {
+        "id": "f3f6788a-61a6-410e-a14d-af7ecca6babb",
+        "name": "UpdatedModflowModel",
+        "description": "UpdatedModflowModelDescription",
+        "geometry": {
+            "type": "Polygon",
+            "coordinates": [[
+                [-63.6874, -31.3136],
+                [-63.6874, -31.3674],
+                [-63.5692, -31.3674],
+                [-63.5692, -31.3136],
+                [-63.6874, -31.3136]
+            ]]
+        },
+        "bounding_box": [
+            [-63.6874, -31.3674],
+            [-63.5692, -31.3136]
+        ],
+        "grid_size": {
+            "n_x": 55,
+            "n_y": 66
+        },
+        "time_unit": 2,
+        "length_unit": 2,
+        "public": false
+    }
+}

@@ -1,17 +1,78 @@
 services:
+    inowas.modflowmodel.active_cells_manager:
+        class: Inowas\ModflowModel\Service\ActiveCellsManager
+        arguments:
+            - '@inowas.modflowmodel.active_cells_finder'
+            - '@inowas.modflowmodel.boundary_manager'
+            - '@inowas.geotools.geotools_service'
+            - '@inowas.modflowmodel.model_finder'
+
+    inowas.modflowmodel.amqp_flopy_calculation:
+        class: Inowas\ModflowModel\Service\AMQPFlopyCalculation
+        arguments:
+            - '@inowas.amqp.stream.connection'
+            - '%rabbit_mq_calculation_queue%'
+
+    inowas.modflowmodel.amqp_flopy_calculation_listener:
+        class: Inowas\ModflowModel\Service\AMQPBasicConsumer
+        arguments:
+            - '@inowas.amqp.stream.connection'
+            - '%rabbit_mq_calculation_finished_queue%'
+
+    inowas.modflowmodel.amqp_modflow_calculation_request:
+        class: Inowas\ModflowModel\Service\AMQPModflowCalculation
+        arguments:
+            - '@inowas.amqp.stream.connection'
+            - '%rabbit_mq_calculation_request_queue%'
+
+    inowas.modflowmodel.amqp_modflow_calculation_request_listener:
+        class: Inowas\ModflowModel\Service\AMQPBasicConsumer
+        arguments:
+            - '@inowas.amqp.stream.connection'
+            - '%rabbit_mq_calculation_request_queue%'
+
+    inowas.modflowmodel.amqp_read_data:
+        class: Inowas\ModflowModel\Service\AMQPFlopyReadData
+        arguments:
+            - '@inowas.amqp.stream.connection'
+            - '%rabbit_mq_read_data_queue%'
+
+    inowas.modflowmodel.boundary_manager:
+        class: Inowas\ModflowModel\Service\BoundaryManager
+        arguments:
+            - '@inowas.modflowmodel.boundary_finder'
+
+    inowas.modflowmodel.layers_persister:
+        class: Inowas\ModflowModel\Service\LayersPersister
+        arguments:
+            - '%data_folder%'
+
     inowas.modflowmodel.manager:
         class: Inowas\ModflowModel\Service\ModflowModelManager
         arguments:
-            - '@inowas.modflowmodel.boundaries_finder'
+            - '@inowas.modflowmodel.active_cells_finder'
+            - '@inowas.modflowmodel.boundary_manager'
+            - '@inowas.geotools.geotools_service'
             - '@inowas.modflowmodel.model_finder'
-            - '@inowas.modflowcalculation.stressperiod_data_generator'
+            - '@inowas.scenarioanalysis.scenarioanalysis_finder'
+            - '@inowas.modflowmodel.stressperiod_data_generator'
 
-    inowas.modflowmodel.boundaries_finder:
-        class: Inowas\ModflowModel\Infrastructure\Projection\BoundaryList\BoundaryFinder
+    inowas.modflowmodel.modflow_packages_manager:
+        class: Inowas\ModflowModel\Service\ModflowPackagesManager
         arguments:
-          - '@doctrine.dbal.default_connection'
+            - '@inowas.modflowmodel.modflow_packages_persister'
+            - '@modflow_model_list'
+            - '@inowas.modflowmodel.manager'
+            - '@inowas.modflowmodel.soilmodel_finder'
+            - '@inowas.geotools.geotools_service'
 
-    inowas.modflowmodel.model_finder:
-        class: Inowas\ModflowModel\Infrastructure\Projection\ModelList\ModelFinder
+    inowas.modflowmodel.modflow_packages_persister:
+        class: Inowas\ModflowModel\Service\ModflowPackagesPersister
         arguments:
-          - '@doctrine.dbal.default_connection'
+            - '%data_folder%'
+
+    inowas.modflowmodel.stressperiod_data_generator:
+        class: Inowas\ModflowModel\Service\StressPeriodDataGenerator
+        arguments:
+            - '@inowas.geotools.geotools_service'
+            - '@inowas.modflowmodel.active_cells_manager'

@@ -48,5 +48,6 @@ final class AddBoreLogToSoilmodelHandler
         }
 
         $soilmodel->addBoreLog($command->userId(), $command->boreLogId());
+        $this->soilmodelList->save($soilmodel);
     }
 }

@@ -21,15 +21,15 @@ class Geometry implements \JsonSerializable
         $obj = json_decode($json);
         $type = strtolower($obj->type);
 
-        if ($type == 'point') {
+        if ($type === 'point') {
             return Geometry::fromPoint(new Point($obj->coordinates[0], $obj->coordinates[1]));
         }
 
-        if ($type == 'linestring') {
+        if ($type === 'linestring') {
             return Geometry::fromLineString(new LineString($obj->coordinates));
         }
 
-        if ($type == 'polygon') {
+        if ($type === 'polygon') {
             return Geometry::fromPolygon(new Polygon($obj->coordinates));
         }
 
@@ -61,15 +61,15 @@ class Geometry implements \JsonSerializable
         }
 
 
-        if ($type == 'point') {
+        if ($type === 'point') {
             return Geometry::fromPoint(new Point($coordinates, $srid));
         }
 
-        if ($type == 'linestring') {
+        if ($type === 'linestring') {
             return Geometry::fromLineString(new LineString($coordinates, $srid));
         }
 
-        if ($type == 'polygon') {
+        if ($type === 'polygon') {
             return Geometry::fromPolygon(new Polygon($coordinates, $srid));
         }
 
@@ -89,7 +89,7 @@ class Geometry implements \JsonSerializable
             return false;
         }
 
-        if (! in_array(strtolower($arr['type']), self::$availableTypes)) {
+        if (! in_array(strtolower($arr['type']), self::$availableTypes, true)) {
             return false;
         }
 
@@ -104,7 +104,7 @@ class Geometry implements \JsonSerializable
         return true;
     }
 
-    public function toArray()
+    public function toArray(): array
     {
         return [
             'type' => $this->geometry->getType(),
@@ -113,7 +113,7 @@ class Geometry implements \JsonSerializable
         ];
     }
 
-    public function toJson()
+    public function toJson():string
     {
         return $this->geometry->toJson();
     }
@@ -129,6 +129,69 @@ class Geometry implements \JsonSerializable
     public function value()
     {
         return $this->geometry;
+    }
+
+    public function isPoint(): bool
+    {
+        return ($this->value() instanceof Point);
+    }
+
+    public function getPoint(): ?Point
+    {
+        if ($this->isPoint()) {
+            return $this->value();
+        }
+
+        return null;
+    }
+
+    public function isLinestring(): bool
+    {
+        return ($this->value() instanceof LineString);
+    }
+
+    public function getLineString(): ?LineString
+    {
+        if ($this->isLinestring()){
+            return $this->value();
+        }
+
+        return null;
+    }
+
+    public function isPolygon(): bool
+    {
+        return ($this->value() instanceof Polygon);
+    }
+
+    public function getPolygon(): ?Polygon
+    {
+        if ($this->isPolygon()){
+            return $this->value();
+        }
+
+        return null;
+    }
+
+    public function getPointFromGeometry(): ?Point
+    {
+        if ($this->isPoint()) {
+            return $this->value();
+        }
+
+        if ($this->isLinestring()) {
+            /** @var LineString $linestring */
+            $linestring = $this->value();
+            return $linestring->getPoint(0);
+        }
+
+        if ($this->isPolygon()) {
+            /** @var Polygon $polygon */
+            $polygon = $this->value();
+            return $polygon->getRing(0)->getPoint(0);
+        }
+
+        return null;
     }
 
     public function jsonSerialize()

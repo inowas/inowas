@@ -32,7 +32,7 @@ class AddGeologicalLayerToSoilmodel extends Command implements PayloadConstructa
         return UserId::fromString($this->payload['user_id']);
     }
 
-    public function soilModelId(): SoilmodelId
+    public function soilmodelId(): SoilmodelId
     {
         return SoilmodelId::fromString($this->payload['soilmodel_id']);
     }

@@ -11,7 +11,7 @@ use Inowas\Common\FileSystem\Modelworkspace;
 use Inowas\Common\Modflow\ExecutableName;
 use Inowas\Common\Modflow\Listunit;
 use Inowas\Common\Modflow\Verbose;
-use Inowas\Common\Modflow\ModelName;
+use Inowas\Common\Modflow\Name;
 use Inowas\Common\Modflow\Version;
 
 class MfPackage implements PackageInterface
@@ -20,7 +20,7 @@ class MfPackage implements PackageInterface
     /** @var string  */
     protected $type = 'mf';
 
-    /** @var  ModelName */
+    /** @var  Name */
     protected $modelname;
 
     /** @var  NameFileExtension */
@@ -46,7 +46,7 @@ class MfPackage implements PackageInterface
 
     public static function fromDefaults(): MfPackage
     {
-        $name = ModelName::fromString('testmodel');
+        $name = Name::fromString('testmodel');
         $fileExtension = NameFileExtension::fromString('nam');
         $version = Version::fromString(Version::MF2005);
         $executableName = FileName::fromString('mf2005');
@@ -60,7 +60,7 @@ class MfPackage implements PackageInterface
 
 
     /** @noinspection MoreThanThreeArgumentsInspection
-     * @param ModelName $name
+     * @param Name $name
      * @param NameFileExtension $fileExtension
      * @param Version $version
      * @param FileName $executableName
@@ -71,7 +71,7 @@ class MfPackage implements PackageInterface
      * @return MfPackage
      */
     public static function fromParams(
-        ModelName $name,
+        Name $name,
         NameFileExtension $fileExtension,
         Version $version,
         FileName $executableName,
@@ -86,7 +86,7 @@ class MfPackage implements PackageInterface
 
     public static function fromArray(array $arr): MfPackage
     {
-        $name = ModelName::fromString($arr['modelname']);
+        $name = Name::fromString($arr['modelname']);
         $fileExtension = NameFileExtension::fromString($arr['namefile_ext']);
         $version = Version::fromString($arr['version']);
         $executableName = FileName::fromString($arr['exe_name']);
@@ -99,7 +99,7 @@ class MfPackage implements PackageInterface
     }
 
     private function __construct(
-        ModelName $name,
+        Name $name,
         NameFileExtension $fileExtension,
         Version $version,
         FileName $executableName,
@@ -124,7 +124,7 @@ class MfPackage implements PackageInterface
         return $this->type;
     }
 
-    public function modelname(): ModelName
+    public function modelname(): Name
     {
         return $this->modelname;
     }
@@ -178,7 +178,7 @@ class MfPackage implements PackageInterface
         );
     }
 
-    public function updateModelname(ModelName $name): MfPackage
+    public function updateModelname(Name $name): MfPackage
     {
         $package = self::fromArray($this->toArray());
         $package->modelname = $name;
@@ -233,6 +233,19 @@ class MfPackage implements PackageInterface
         $package->verbose = $verbose;
         return $package;
     }
+
+    public function isValid(): bool
+    {
+        return true;
+    }
+
+    public function getEditables(): array
+    {
+        return $this->toArray();
+    }
+
+    public function mergeEditables(array $arr): void
+    {}
 
     /**
      * @return array

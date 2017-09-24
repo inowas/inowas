@@ -1,44 +1,93 @@
-prooph_event_store:
-    stores:
-        modflow_model_store:
-            adapter: 'prooph_event_store.doctrine_adapter.model_store'
-            repositories:
-                modflow_calculation_list:
-                    repository_class: 'Inowas\ModflowCalculation\Infrastructure\Repository\EventStoreModflowCalculationList'
-                    aggregate_type: 'Inowas\ModflowCalculation\Model\ModflowCalculationAggregate'
-                    aggregate_translator: 'prooph_event_sourcing.aggregate_translator'
-                modflow_model_list:
-                    repository_class: 'Inowas\ModflowModel\Infrastructure\Repository\EventStoreModflowModelList'
-                    aggregate_type: 'Inowas\ModflowModel\Model\ModflowModelAggregate'
-                    aggregate_translator: 'prooph_event_sourcing.aggregate_translator'
-                scenarioanalysis_list:
-                    repository_class: 'Inowas\ScenarioAnalysis\Infrastructure\Repository\EventStoreScenarioAnalysisList'
-                    aggregate_type: 'Inowas\ScenarioAnalysis\Model\ScenarioAnalysisAggregate'
-                    aggregate_translator: 'prooph_event_sourcing.aggregate_translator'
-                soil_model_list:
-                    repository_class: 'Inowas\Soilmodel\Infrastructure\Repository\EventStoreSoilmodelList'
-                    aggregate_type: 'Inowas\Soilmodel\Model\SoilmodelAggregate'
-                    aggregate_translator: 'prooph_event_sourcing.aggregate_translator'
-                bore_log_list:
-                    repository_class: 'Inowas\Soilmodel\Infrastructure\Repository\EventStoreBoreLogList'
-                    aggregate_type: 'Inowas\Soilmodel\Model\BoreLogAggregate'
-                    aggregate_translator: 'prooph_event_sourcing.aggregate_translator'
+parameters:
+    prooph_event_store:
+        plugins:
+          - 'prooph_event_store.event_publisher'
+        metadata_enrichers: []
+    prooph_event_store_repositories:
+        modflow_model_list:
+            repository_class: 'Inowas\ModflowModel\Infrastructure\Repository\EventStoreModflowModelList'
+            aggregate_type: 'Inowas\ModflowModel\Model\ModflowModelAggregate'
+            aggregate_translator: 'prooph_event_sourcing.aggregate_translator'
+            stream_name: 'modflow_model_event_stream'
+        scenarioanalysis_list:
+            repository_class: 'Inowas\ScenarioAnalysis\Infrastructure\Repository\EventStoreScenarioAnalysisList'
+            aggregate_type: 'Inowas\ScenarioAnalysis\Model\ScenarioAnalysisAggregate'
+            aggregate_translator: 'prooph_event_sourcing.aggregate_translator'
+            stream_name: 'scenario_analysis_event_stream'
+        soil_model_list:
+            repository_class: 'Inowas\Soilmodel\Infrastructure\Repository\EventStoreSoilmodelList'
+            aggregate_type: 'Inowas\Soilmodel\Model\SoilmodelAggregate'
+            aggregate_translator: 'prooph_event_sourcing.aggregate_translator'
+            stream_name: 'soil_model_event_stream'
+        bore_log_list:
+            repository_class: 'Inowas\Soilmodel\Infrastructure\Repository\EventStoreBoreLogList'
+            aggregate_type: 'Inowas\Soilmodel\Model\BoreLogAggregate'
+            aggregate_translator: 'prooph_event_sourcing.aggregate_translator'
+            stream_name: 'bore_log_event_stream'
 
 services:
-    prooph_event_store.doctrine_adapter.model_store:
-        class: Prooph\EventStore\Adapter\Doctrine\DoctrineEventStoreAdapter
-        arguments: ['@database_connection', '@prooph_event_store.message_factory', '@prooph_event_store.message_converter', '@prooph_event_store.payload_serializer', '%prooph_event_store.stream_table_map%']
+    prooph_message_factory:
+        class: Prooph\Common\Messaging\FQCNMessageFactory
+
+    prooph_persistence_strategy:
+        class: Prooph\EventStore\Pdo\PersistenceStrategy\PostgresSingleStreamStrategy
+
+    prooph_event_store_postgres:
+        class: Prooph\EventStore\Pdo\PostgresEventStore
+        arguments:
+            - '@prooph_message_factory'
+            - "@=service('doctrine.dbal.default_connection').getWrappedConnection()"
+            - '@prooph_persistence_strategy'
+            - '10000'
+            - 'event_streams'
+
+    prooph_event_store:
+        class: Prooph\EventStore\Pdo\PostgresEventStore
+        factory: [Inowas\ModflowBundle\Infrastructure\Container\EventStoreFactory, create]
+        arguments:
+            - '@service_container'
+            - '%prooph_event_store%'
+
+    prooph_event_store.event_publisher:
+        class: Prooph\EventStoreBusBridge\EventPublisher
+        arguments:
+            - '@prooph_service_bus.modflow_event_bus'
 
     prooph_event_sourcing.aggregate_translator:
         class: Prooph\EventSourcing\EventStoreIntegration\AggregateTranslator
 
     prooph_event_store_bus_bridge.transaction_manager:
         class: Prooph\EventStoreBusBridge\TransactionManager
-        tags:
-            - { name: 'prooph_event_store.modflow_model_store.plugin' }
+        arguments:
+            - '@prooph_event_store'
 
-    prooph_event_store_bus_bridge.todo_event_publisher:
-          class: Prooph\EventStoreBusBridge\EventPublisher
-          arguments: ['@prooph_service_bus.modflow_event_bus']
-          tags:
-            - { name: 'prooph_event_store.modflow_model_store.plugin' }
+    prooph_service_bus.on_event_invoke_strategy:
+        class: Prooph\ServiceBus\Plugin\InvokeStrategy\OnEventStrategy
+
+    modflow_model_list:
+        class: Inowas\ModflowModel\Infrastructure\Repository\EventStoreModflowModelList
+        factory: [Inowas\ModflowBundle\Infrastructure\Container\AggregateRepositoryFactory, create]
+        arguments:
+          - '@service_container'
+          - 'modflow_model_list'
+
+    scenarioanalysis_list:
+        class: Inowas\ScenarioAnalysis\Infrastructure\Repository\EventStoreScenarioAnalysisList
+        factory: [Inowas\ModflowBundle\Infrastructure\Container\AggregateRepositoryFactory, create]
+        arguments:
+          - '@service_container'
+          - 'scenarioanalysis_list'
+
+    soil_model_list:
+        class: Inowas\Soilmodel\Infrastructure\Repository\EventStoreSoilmodelList
+        factory: [Inowas\ModflowBundle\Infrastructure\Container\AggregateRepositoryFactory, create]
+        arguments:
+          - '@service_container'
+          - 'soil_model_list'
+
+    bore_log_list:
+        class: Inowas\Soilmodel\Infrastructure\Repository\EventStoreBoreLogList
+        factory: [Inowas\ModflowBundle\Infrastructure\Container\AggregateRepositoryFactory, create]
+        arguments:
+          - '@service_container'
+          - 'bore_log_list'

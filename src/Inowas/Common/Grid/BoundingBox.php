@@ -8,142 +8,110 @@ use Inowas\Common\Geometry\Point;
 
 class BoundingBox implements \JsonSerializable
 {
-    /** @var float */
-    private $xMin;
 
-    /** @var float */
-    private $xMax;
+    /** @var  Point */
+    private $point1;
 
-    /** @var float */
-    private $yMin;
+    /** @var  Point */
+    private $point2;
 
-    /** @var float */
-    private $yMax;
-
-    /** @var int */
-    private $srid;
-
-    /**
-     * DeltaX in meters
-     * @var  float
-     */
-    private $dX;
-
-    /**
-     * DeltaY in meters
-     * @var float
-     */
-    private $dY;
-
-
-    public static function fromEPSG4326Coordinates($x1, $x2, $y1, $y2, $dXinMeters, $dYinMeters): BoundingBox
-    {
-        return new self($x1, $x2, $y1, $y2, 4326, $dXinMeters, $dYinMeters);
+    public static function fromPoints(Point $point1, Point $point2) {
+        return new self($point1, $point2);
     }
 
-    public static function fromCoordinates($x1, $x2, $y1, $y2, $srid, $dXinMeters = 0, $dYinMeters = 0): BoundingBox
+    public static function fromCoordinates($x1, $x2, $y1, $y2): BoundingBox
     {
-        return new self($x1, $x2, $y1, $y2, $srid, $dXinMeters, $dYinMeters);
+        $p1 = new Point($x1, $y1);
+        $p2 = new Point($x2, $y2);
+        return new self($p1, $p2);
     }
 
     public static function fromArray(array $bb): BoundingBox
     {
-        return new self($bb['x_min'], $bb['x_max'], $bb['y_min'], $bb['y_max'], $bb['srid'], $bb['d_x'], $bb['d_y']);
+        $p1 = new Point($bb[0][0], $bb[0][1]);
+        $p2 = new Point($bb[1][0], $bb[1][1]);
+
+        return new self($p1, $p2);
     }
 
-    private function __construct($x1, $x2, $y1, $y2, $srid, $dX, $dY)
+    private function __construct(Point $point1, Point $point2)
     {
-        if ($x1 > $x2){
-            $this->xMin = $x2;
-            $this->xMax = $x1;
-        } else {
-            $this->xMin = $x1;
-            $this->xMax = $x2;
-        }
-
-        if ($y1 > $y2){
-            $this->yMin = $y2;
-            $this->yMax = $y1;
-        } else {
-            $this->yMin = $y1;
-            $this->yMax = $y2;
-        }
-
-        $this->srid = $srid;
-
-        $this->dX = $dX;
-        $this->dY = $dY;
+        $this->point1 = $point1;
+        $this->point2 = $point2;
     }
 
     public function xMin(): float
     {
-        return $this->xMin;
+        if ($this->point1->getX() <= $this->point2->getX()){
+            return $this->point1->getX();
+        }
+
+        return $this->point2->getX();
     }
 
     public function xMax(): float
     {
-        return $this->xMax;
+        if ($this->point1->getX() >= $this->point2->getX()){
+            return $this->point1->getX();
+        }
+
+        return $this->point2->getX();
     }
 
     public function yMin(): float
     {
-        return $this->yMin;
+        if ($this->point1->getY() <= $this->point2->getY()){
+            return $this->point1->getY();
+        }
+
+        return $this->point2->getY();
     }
 
     public function yMax(): float
     {
-        return $this->yMax;
-    }
+        if ($this->point1->getY() > $this->point2->getY()){
+            return $this->point1->getY();
+        }
 
-    public function srid(): int
-    {
-        return $this->srid;
-    }
-
-    public function dX(): float
-    {
-        return $this->dX;
-    }
-
-    public function dY(): float
-    {
-        return $this->dY;
+        return $this->point2->getY();
     }
 
     public function toArray()
     {
         return array(
-            'x_min' => $this->xMin,
-            'x_max' => $this->xMax,
-            'y_min' => $this->yMin,
-            'y_max' => $this->yMax,
-            'srid' => $this->srid,
-            'd_x' => $this->dX,
-            'd_y' => $this->dY,
+            [$this->point1->getLongitude(), $this->point1->getLatitude()],
+            [$this->point2->getLongitude(), $this->point2->getLatitude()]
         );
-    }
-
-    /**
-     * @return array
-     */
-    public function jsonSerialize()
-    {
-        return $this->toArray();
     }
 
     public function toGeoJson(){
         return sprintf('{"type":"Polygon", "coordinates":[[[%f,%f],[%f,%f],[%f,%f],[%f,%f],[%f,%f]]]}',
-            $this->xMin, $this->yMin,
-            $this->xMin, $this->yMax,
-            $this->xMax, $this->yMax,
-            $this->xMax, $this->yMin,
-            $this->xMin, $this->yMin
+            $this->xMin(), $this->yMin(),
+            $this->xMin(), $this->yMax(),
+            $this->xMax(), $this->yMax(),
+            $this->xMax(), $this->yMin(),
+            $this->xMin(), $this->yMin()
         );
     }
 
-    public function upperLeft(): Point
+    public function topLeft(): Point
     {
-        return new Point($this->xMin, $this->yMax);
+        return new Point($this->xMin(), $this->yMax());
+    }
+
+    public function topRight(): Point
+    {
+        return new Point($this->xMax(), $this->yMax());
+    }
+
+    public function bottomLeft(): Point
+    {
+        return new Point($this->xMin(), $this->yMin());
+    }
+
+    public function bottomRight(): Point
+    {
+        return new Point($this->xMax(), $this->yMin());
     }
 
     public function sameAs(BoundingBox $boundingBox): bool
@@ -152,10 +120,12 @@ class BoundingBox implements \JsonSerializable
             ($this->xMin() === $boundingBox->xMin()) &&
             ($this->xMax() === $boundingBox->xMax()) &&
             ($this->yMin() === $boundingBox->yMin()) &&
-            ($this->yMax() === $boundingBox->yMax()) &&
-            ($this->srid() === $boundingBox->srid()) &&
-            ($this->dX() === $boundingBox->dX()) &&
-            ($this->dY() === $boundingBox->dY())
+            ($this->yMax() === $boundingBox->yMax())
         );
+    }
+
+    public function jsonSerialize(): array
+    {
+        return $this->toArray();
     }
 }

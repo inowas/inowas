@@ -1,0 +1,22 @@
+services:
+    inowas.scenarioanalysis.scenarioanalysis_was_cloned_process_manager:
+        class: Inowas\ScenarioAnalysis\Infrastructure\ProcessManager\ScenarioAnalysisWasClonedProcessManager
+        arguments:
+          - '@prooph_service_bus.modflow_command_bus'
+          - '@scenarioanalysis_list'
+
+    inowas.scenarioanalysis.scenarioanalysis_was_deleted_process_manager:
+        class: Inowas\ScenarioAnalysis\Infrastructure\ProcessManager\ScenarioAnalysisWasDeletedProcessManager
+        arguments:
+          - '@prooph_service_bus.modflow_command_bus'
+          - '@scenarioanalysis_list'
+
+    inowas.scenarioanalysis.scenario_was_created_process_manager:
+        class: Inowas\ScenarioAnalysis\Infrastructure\ProcessManager\ScenarioWasCreatedProcessManager
+        arguments:
+          - '@prooph_service_bus.modflow_command_bus'
+
+    inowas.scenarioanalysis.scenario_was_deleted_process_manager:
+        class: Inowas\ScenarioAnalysis\Infrastructure\ProcessManager\ScenarioWasDeletedProcessManager
+        arguments:
+          - '@prooph_service_bus.modflow_command_bus'

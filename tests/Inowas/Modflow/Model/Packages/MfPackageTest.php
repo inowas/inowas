@@ -10,14 +10,14 @@ use Inowas\Common\FileSystem\FileName;
 use Inowas\Common\FileSystem\Modelworkspace;
 use Inowas\Common\Modflow\Listunit;
 use Inowas\Common\Modflow\Verbose;
-use Inowas\Common\Modflow\ModelName;
+use Inowas\Common\Modflow\Name;
 use Inowas\Common\Modflow\Version;
 use Inowas\ModflowModel\Model\Packages\MfPackage;
 
 class MfPackageTest extends \PHPUnit_Framework_TestCase
 {
     public function test_create(){
-        $modflowModelName = ModelName::fromString('ModelName');
+        $modflowModelName = Name::fromString('ModelName');
         $fileExtension = NameFileExtension::fromString('nam');
         $version = Version::fromString(Version::MF2005);
         $executableName = FileName::fromString('mf2005');
@@ -51,7 +51,7 @@ class MfPackageTest extends \PHPUnit_Framework_TestCase
 
     public function test_update_modelname(){
         $mfPackage = MfPackage::fromDefaults();
-        $mfPackage = $mfPackage->updateModelname(ModelName::fromString('modelnametest2'));
+        $mfPackage = $mfPackage->updateModelname(Name::fromString('modelnametest2'));
         $obj = json_decode(json_encode($mfPackage));
         $this->assertEquals('modelnametest2', $obj->modelname);
     }

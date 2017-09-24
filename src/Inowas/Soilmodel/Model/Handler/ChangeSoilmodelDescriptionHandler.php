@@ -34,5 +34,6 @@ final class ChangeSoilmodelDescriptionHandler
         }
 
         $soilmodel->changeDescription($command->userId(), $command->description());
+        $this->soilmodelList->save($soilmodel);
     }
 }

@@ -23,6 +23,8 @@ class ScenarioAnalysisDescriptionWasChanged extends AggregateChanged
 
     public static function of(ScenarioAnalysisId $id, UserId $userId, ScenarioAnalysisDescription $description): ScenarioAnalysisDescriptionWasChanged
     {
+
+        /** @var ScenarioAnalysisDescriptionWasChanged $event */
         $event = self::occur($id->toString(), [
                 'user_id' => $userId->toString(),
                 'description' => $description->toString()

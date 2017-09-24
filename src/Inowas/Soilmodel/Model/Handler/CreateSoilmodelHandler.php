@@ -25,6 +25,6 @@ final class CreateSoilmodelHandler
             $command->soilmodelId()
         );
 
-        $this->soilmodelList->add($soilmodel);
+        $this->soilmodelList->save($soilmodel);
     }
 }

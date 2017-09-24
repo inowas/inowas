@@ -35,6 +35,6 @@ final class CloneSoilmodelHandler
             $soilmodel
         );
 
-        $this->soilmodelList->add($soilmodel);
+        $this->soilmodelList->save($soilmodel);
     }
 }

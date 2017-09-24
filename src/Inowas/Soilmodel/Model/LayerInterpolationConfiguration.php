@@ -11,8 +11,8 @@ use Inowas\Common\Interpolation\PointValue;
 class LayerInterpolationConfiguration
 {
 
-    const METHOD_GAUSSIAN = "gaussian";
-    const METHOD_MEAN = "mean";
+    const METHOD_GAUSSIAN = 'gaussian';
+    const METHOD_MEAN = 'mean';
 
     /** @var  array */
     protected $pointValues = [];
@@ -70,6 +70,16 @@ class LayerInterpolationConfiguration
         return $this->pointValues;
     }
 
+    public function clear(): LayerInterpolationConfiguration
+    {
+        $self = new self();
+        $self->pointValues = [];
+        $self->methods = $this->methods;
+        $self->boundingBox = $this->boundingBox;
+        $self->gridSize = $this->gridSize;
+        return $self;
+    }
+
     public function toJson(): string
     {
         $arr = [];
@@ -87,7 +97,7 @@ class LayerInterpolationConfiguration
             ),
             'grid_size' => array(
                 'n_x' => $this->gridSize->nX(),
-                'n_y' => $this->gridSize->ny()
+                'n_y' => $this->gridSize->nY()
             ),
             'point_values' => $this->pointValues
         );

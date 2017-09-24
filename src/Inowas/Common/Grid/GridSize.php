@@ -55,7 +55,7 @@ class GridSize implements \JsonSerializable
         return $this->nY;
     }
 
-    public function toArray()
+    public function toArray(): array
     {
         return array(
             'n_x' => $this->nX,
@@ -63,10 +63,7 @@ class GridSize implements \JsonSerializable
         );
     }
 
-    /**
-     * @return mixed
-     */
-    function jsonSerialize()
+    public function jsonSerialize()
     {
         return $this->toArray();
     }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Inowas\Common\Boundaries;
 
+use Inowas\Common\DateTime\DateTime;
+
 class WellDateTimeValue extends DateTimeValue
 {
 
@@ -12,25 +14,23 @@ class WellDateTimeValue extends DateTimeValue
     /** @var float */
     private $pumpingRate;
 
-    /** @var  \DateTimeImmutable */
-    private $dateTime;
 
-    public static function fromParams(\DateTimeImmutable $dateTime, float $pumpingRate): WellDateTimeValue
+    public static function fromParams(DateTime $dateTime, float $pumpingRate): WellDateTimeValue
     {
         return new self($dateTime, $pumpingRate);
     }
 
     public static function fromArray(array $arr): WellDateTimeValue
     {
-        return new self(new \DateTimeImmutable($arr['date_time']), $arr['pumping_rate']);
+        return new self(DateTime::fromAtom($arr['date_time']), $arr['values'][0]);
     }
 
     public static function fromArrayValues(array $arr): WellDateTimeValue
     {
-        return new self(new \DateTimeImmutable($arr[0]), $arr[1]);
+        return new self(DateTime::fromAtom($arr[0]), $arr[1]);
     }
 
-    private function __construct(\DateTimeImmutable $dateTime, float $pumpingRate){
+    private function __construct(DateTime $dateTime, float $pumpingRate) {
         $this->dateTime = $dateTime;
         $this->pumpingRate = $pumpingRate;
     }
@@ -40,7 +40,7 @@ class WellDateTimeValue extends DateTimeValue
         return self::TYPE;
     }
 
-    public function dateTime(): \DateTimeImmutable
+    public function dateTime(): DateTime
     {
         return $this->dateTime;
     }
@@ -53,8 +53,8 @@ class WellDateTimeValue extends DateTimeValue
     public function toArray(): array
     {
         return array(
-            'date_time' => $this->dateTime->format(DATE_ATOM),
-            'pumping_rate' => $this->pumpingRate
+            'date_time' => $this->dateTime->toAtom(),
+            'values' => [$this->pumpingRate]
         );
     }
 

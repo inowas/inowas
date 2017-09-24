@@ -30,6 +30,6 @@ final class CreateBoreLogHandler
             $command->location()
         );
 
-        $this->boreLogList->add($boreLog);
+        $this->boreLogList->save($boreLog);
     }
 }

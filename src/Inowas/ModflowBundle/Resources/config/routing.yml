@@ -1,3 +1,8 @@
+rest_message_box_api:
+    type: rest
+    resource: '@InowasModflowBundle/Controller/MessageBoxController.php'
+    prefix:    /v2
+
 rest_calculation_api:
     type: rest
     resource: '@InowasModflowBundle/Controller/ModflowCalculationController.php'
@@ -13,14 +18,14 @@ rest_modflowmodel_api:
     resource: '@InowasModflowBundle/Controller/ModflowModelController.php'
     prefix:    /v2
 
-rest_modflowmodel_boundary_api:
-    type: rest
-    resource: '@InowasModflowBundle/Controller/ModflowModelBoundaryController.php'
-    prefix:    /v2
-
 rest_project_api:
     type: rest
     resource: '@InowasModflowBundle/Controller/ToolController.php'
+    prefix:    /v2
+
+rest_soilmodel_api:
+    type: rest
+    resource: '@InowasModflowBundle/Controller/SoilmodelController.php'
     prefix:    /v2
 
 rest_scenario_analysis_api:

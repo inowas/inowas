@@ -7,15 +7,14 @@ namespace Inowas\Soilmodel\Infrastructure\Repository;
 use Inowas\Soilmodel\Model\BoreLogAggregate;
 use Inowas\Common\Soilmodel\BoreLogId;
 use Inowas\Soilmodel\Model\BoreLogList;
-
-use Prooph\EventStore\Aggregate\AggregateRepository;
+use Prooph\EventSourcing\Aggregate\AggregateRepository;
 
 class EventStoreBoreLogList extends AggregateRepository implements BoreLogList
 {
 
-    public function add(BoreLogAggregate $boreLogAggregate)
+    public function save(BoreLogAggregate $boreLogAggregate)
     {
-        $this->addAggregateRoot($boreLogAggregate);
+        $this->saveAggregateRoot($boreLogAggregate);
     }
 
     public function get(BoreLogId $boreLogId)

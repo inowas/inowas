@@ -1,0 +1,10 @@
+{
+    "uuid": "7427887d-4620-4386-b187-1c5c97a200c0",
+    "message_name": "cloneModflowModel",
+    "metadata": {},
+    "payload": {
+        "id": "f3f6788a-61a6-410e-a14d-af7ecca6babb",
+        "new_id": "aa333bf2-b2f4-487c-a781-986c0e64d6bc",
+        "is_tool": true
+    }
+}

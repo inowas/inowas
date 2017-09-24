@@ -1,0 +1,9 @@
+{
+    "uuid": "457cd469-670e-48c8-a40a-748cf36f641e",
+    "message_name": "removeLayer",
+    "metadata": {},
+    "payload": {
+        "id": "f3f6788a-61a6-410e-a14d-af7ecca6babb",
+        "layer_id": "l0"
+    }
+}

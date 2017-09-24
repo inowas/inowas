@@ -6,9 +6,9 @@ namespace Tests\Inowas\ModflowBundle\Controller;
 
 use FOS\UserBundle\Doctrine\UserManager;
 use Inowas\AppBundle\Model\User;
-use Inowas\Common\DateTime\DateTime;
 use Inowas\Common\Id\ModflowId;
 use Inowas\Common\Id\UserId;
+use Inowas\Common\Status\Visibility;
 use Inowas\ScenarioAnalysis\Model\Command\CreateScenarioAnalysis;
 use Inowas\ScenarioAnalysis\Model\ScenarioAnalysisDescription;
 use Inowas\ScenarioAnalysis\Model\ScenarioAnalysisId;
@@ -69,28 +69,14 @@ class ToolControllerTest extends EventSourcingBaseTest
     /**
      * @test
      */
-    public function it_returns_the_overall_tool_list_from_the_user(): void
+    public function it_adds_a_modflow_model_to_tools_section(): void
     {
         $userId = UserId::fromString($this->user->getId()->toString());
         $apiKey = $this->user->getApiKey();
         $username = $this->user->getName();
 
         $modelId = ModflowId::generate();
-        $this->createModelWithSoilmodel($userId, $modelId);
-
-        $calculationId = ModflowId::generate();
-        $start = DateTime::fromDateTime(new \DateTime('2010-01-01'));
-        $end = DateTime::fromDateTime(new \DateTime('2015-01-01'));
-        $this->createCalculation($calculationId, $userId, $modelId, $start, $end);
-
-        $scenarioAnalysisId = ScenarioAnalysisId::generate();
-        $this->commandBus->dispatch(CreateScenarioAnalysis::byUserWithBaseModelNameAndDescription(
-            $scenarioAnalysisId,
-            $userId,
-            $modelId,
-            ScenarioAnalysisName::fromString('TestName'),
-            ScenarioAnalysisDescription::fromString('TestDescription')
-        ));
+        $this->createModelWithOneLayer($userId, $modelId);
 
         $client = static::createClient();
         $client->request(
@@ -108,8 +94,93 @@ class ToolControllerTest extends EventSourcingBaseTest
         $this->assertCount(1, $body);
         $saDetails = $body[0];
 
+
         $this->assertTrue(array_key_exists('id', $saDetails));
-        $this->assertEquals($scenarioAnalysisId->toString(), $saDetails['id']);
+        $this->assertEquals($modelId->toString(), $saDetails['id']);
+        $this->assertTrue(array_key_exists('name', $saDetails));
+        $this->assertEquals('Rio Primero Base Model', $saDetails['name']);
+        $this->assertTrue(array_key_exists('description', $saDetails));
+        $this->assertEquals('Base Model for the scenario analysis 2020 Rio Primero.', $saDetails['description']);
+        $this->assertTrue(array_key_exists('project', $saDetails));
+        $this->assertTrue(array_key_exists('application', $saDetails));
+        $this->assertTrue(array_key_exists('tool', $saDetails));
+        $this->assertEquals('T03', $saDetails['tool']);
+        $this->assertTrue(array_key_exists('user_id', $saDetails));
+        $this->assertEquals($userId->toString(), $saDetails['user_id']);
+        $this->assertTrue(array_key_exists('user_name', $saDetails));
+        $this->assertEquals($username, $saDetails['user_name']);
+        $this->assertTrue(array_key_exists('created_at', $saDetails));
+        $this->assertTrue(array_key_exists('public', $saDetails));
+    }
+
+    /**
+     * @test
+     */
+    public function it_removes_a_modflow_model_to_tools_section(): void
+    {
+        $userId = UserId::fromString($this->user->getId()->toString());
+        $apiKey = $this->user->getApiKey();
+
+        $modelId = ModflowId::generate();
+        $this->createModelWithOneLayer($userId, $modelId);
+        $this->deleteModel($userId, $modelId);
+
+        $client = static::createClient();
+        $client->request(
+            'GET',
+            '/v2/tools',
+            array(),
+            array(),
+            array('HTTP_X-AUTH-TOKEN' => $apiKey)
+        );
+
+        $response = $client->getResponse();
+        $this->assertEquals(200, $response->getStatusCode());
+        $body = json_decode($response->getContent(), true);
+        $this->assertTrue(is_array($body));
+        $this->assertCount(0, $body);
+    }
+
+    /**
+     * @test
+     */
+    public function it_returns_the_overall_tool_list_from_the_user(): void
+    {
+        $userId = UserId::fromString($this->user->getId()->toString());
+        $apiKey = $this->user->getApiKey();
+        $username = $this->user->getName();
+
+        $modelId = ModflowId::generate();
+        $this->createModelWithOneLayer($userId, $modelId);
+
+        $scenarioAnalysisId = ScenarioAnalysisId::generate();
+        $this->commandBus->dispatch(CreateScenarioAnalysis::byUserWithBaseModelNameAndDescription(
+            $scenarioAnalysisId,
+            $userId,
+            $modelId,
+            ScenarioAnalysisName::fromString('TestName'),
+            ScenarioAnalysisDescription::fromString('TestDescription'),
+            Visibility::public()
+        ));
+
+        $client = static::createClient();
+        $client->request(
+            'GET',
+            '/v2/tools',
+            array(),
+            array(),
+            array('HTTP_X-AUTH-TOKEN' => $apiKey)
+        );
+
+        $response = $client->getResponse();
+        $this->assertEquals(200, $response->getStatusCode());
+        $body = json_decode($response->getContent(), true);
+        $this->assertTrue(is_array($body));
+        $this->assertCount(2, $body);
+        $saDetails = $body[0];
+
+        $this->assertTrue(array_key_exists('id', $saDetails));
+        $this->assertTrue($scenarioAnalysisId->toString() ===  $saDetails['id'] || $modelId->toString()===  $saDetails['id']);
         $this->assertTrue(array_key_exists('name', $saDetails));
         $this->assertEquals('TestName', $saDetails['name']);
         $this->assertTrue(array_key_exists('description', $saDetails));
@@ -117,6 +188,7 @@ class ToolControllerTest extends EventSourcingBaseTest
         $this->assertTrue(array_key_exists('project', $saDetails));
         $this->assertTrue(array_key_exists('application', $saDetails));
         $this->assertTrue(array_key_exists('tool', $saDetails));
+        $this->assertEquals('T07', $saDetails['tool']);
         $this->assertTrue(array_key_exists('user_id', $saDetails));
         $this->assertEquals($userId->toString(), $saDetails['user_id']);
         $this->assertTrue(array_key_exists('user_name', $saDetails));
@@ -135,12 +207,7 @@ class ToolControllerTest extends EventSourcingBaseTest
         $username = $this->user->getName();
 
         $modelId = ModflowId::generate();
-        $this->createModelWithSoilmodel($userId, $modelId);
-
-        $calculationId = ModflowId::generate();
-        $start = DateTime::fromDateTime(new \DateTime('2010-01-01'));
-        $end = DateTime::fromDateTime(new \DateTime('2015-01-01'));
-        $this->createCalculation($calculationId, $userId, $modelId, $start, $end);
+        $this->createModelWithOneLayer($userId, $modelId);
 
         $scenarioAnalysisId = ScenarioAnalysisId::generate();
         $this->commandBus->dispatch(CreateScenarioAnalysis::byUserWithBaseModelNameAndDescription(
@@ -148,7 +215,8 @@ class ToolControllerTest extends EventSourcingBaseTest
             $userId,
             $modelId,
             ScenarioAnalysisName::fromString('TestName'),
-            ScenarioAnalysisDescription::fromString('TestDescription')
+            ScenarioAnalysisDescription::fromString('TestDescription'),
+            Visibility::public()
         ));
 
         $client = static::createClient();
@@ -191,12 +259,7 @@ class ToolControllerTest extends EventSourcingBaseTest
     {
         $userId = UserId::fromString($this->user->getId()->toString());
         $modelId = ModflowId::generate();
-        $this->createModelWithSoilmodel($userId, $modelId);
-
-        $calculationId = ModflowId::generate();
-        $start = DateTime::fromDateTime(new \DateTime('2015-01-01'));
-        $end = DateTime::fromDateTime(new \DateTime('2015-01-31'));
-        $this->createCalculation($calculationId, $userId, $modelId, $start, $end);
+        $this->createModelWithOneLayer($userId, $modelId);
 
         $scenarioAnalysisId = ScenarioAnalysisId::generate();
         $this->commandBus->dispatch(CreateScenarioAnalysis::byUserWithBaseModelNameAndDescription(
@@ -204,7 +267,8 @@ class ToolControllerTest extends EventSourcingBaseTest
             $userId,
             $modelId,
             ScenarioAnalysisName::fromString('TestName'),
-            ScenarioAnalysisDescription::fromString('TestDescription')
+            ScenarioAnalysisDescription::fromString('TestDescription'),
+            Visibility::public()
         ));
 
         $client = static::createClient();
@@ -217,5 +281,6 @@ class ToolControllerTest extends EventSourcingBaseTest
         );
 
         $response = $client->getResponse();
+        $this->assertEquals(302, $response->getStatusCode());
     }
 }

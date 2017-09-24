@@ -4,100 +4,68 @@ declare(strict_types=1);
 
 namespace Inowas\Common\Boundaries;
 
+use Inowas\Common\DateTime\DateTime;
 use Inowas\Common\Geometry\Geometry;
-use Inowas\Common\Grid\ActiveCells;
+use Inowas\Common\Grid\AffectedLayers;
 use Inowas\Common\Id\BoundaryId;
 use Inowas\Common\Id\ObservationPointId;
+use Inowas\Common\Modflow\Name;
 
-class RechargeBoundary extends AbstractBoundary
+class RechargeBoundary extends ModflowBoundary
 {
+    const CARDINALITY = '1';
     const TYPE = 'rch';
 
     /** @var  ObservationPoint */
     protected $observationPoint;
 
-    public static function create(BoundaryId $boundaryId): RechargeBoundary
+    public static function fromArray(array $arr): ModflowBoundary
     {
-        return new self($boundaryId);
-    }
+        $self = new self(
+            BoundaryId::fromString($arr['id']),
+            Name::fromString($arr['name']),
+            Geometry::fromArray($arr['geometry']),
+            AffectedLayers::fromArray($arr['affected_layers']),
+            Metadata::fromArray((array)$arr['metadata'])
+        );
 
-    public static function createWithParams(
-        BoundaryId $boundaryId,
-        BoundaryName $name,
-        Geometry $geometry
-    ): RechargeBoundary
-    {
-        $self = new self($boundaryId, $name, $geometry);
+        /** @var array $dateTimeValues */
+        $dateTimeValues = $arr['date_time_values'];
+        foreach ($dateTimeValues as $date_time_value) {
+            $self->addRecharge(
+                RechargeDateTimeValue::fromParams(
+                    DateTime::fromAtom($date_time_value['date_time']),
+                    $date_time_value['values'][0]
+                )
+            );
+        }
+
         return $self;
     }
 
-    public function addRecharge(RechargeDateTimeValue $rechargeRate): RechargeBoundary
+    public function addRecharge(RechargeDateTimeValue $rechargeRate): ModflowBoundary
     {
-        // In case of rechargeBoundary, the observationPointId is the boundaryId
-        $observationPointId = ObservationPointId::fromString($this->boundaryId->toString());
-        if (! $this->hasOp($observationPointId)) {
-            $this->addOrUpdateOp($this->createObservationPoint());
+        $observationPointId = ObservationPointId::fromString('OP');
+        if (! $this->hasObservationPoint($observationPointId)) {
+            $this->addObservationPoint(
+                ObservationPoint::fromIdTypeNameAndGeometry(
+                    $observationPointId,
+                    $this->type(),
+                    Name::fromString($this->name->toString()),
+                    $this->geometry->getPointFromGeometry()
+                )
+            );
         }
 
         $this->addDateTimeValue($rechargeRate, $observationPointId);
-
-        $self = new self($this->boundaryId, $this->name, $this->geometry, $this->activeCells);
-        $self->observationPoints = $this->observationPoints;
-        $self->affectedLayers = $this->affectedLayers;
-        return $self;
+        return $this->self();
     }
 
-    public function setActiveCells(ActiveCells $activeCells): RechargeBoundary
-    {
-        $self = new self($this->boundaryId, $this->name, $this->geometry, $activeCells);
-        $self->observationPoints = $this->observationPoints;
-        $self->affectedLayers = $this->affectedLayers;
-        return $self;
-    }
-
-    public function updateGeometry(Geometry $geometry): RechargeBoundary
-    {
-        $self = new self($this->boundaryId, $this->name, $geometry, $this->activeCells);
-        $self->observationPoints = $this->observationPoints;
-        $self->affectedLayers = $this->affectedLayers;
-        return $self;
-    }
-
-    public function type(): string
-    {
-        return self::TYPE;
-    }
-
-    public function metadata(): array
-    {
-        return [];
-    }
-
-    public function dataToJson(): string
-    {
-        return json_encode($this->observationPoints);
-    }
-
-    public function dateTimeValues(): array
-    {
-        /** @var ObservationPoint $observationPoint */
-        $observationPoint = $this->observationPoints[$this->boundaryId->toString()];
-        return $observationPoint->dateTimeValues();
-    }
-
-    private function createObservationPoint(): ObservationPoint
-    {
-        return ObservationPoint::fromIdNameAndGeometry(
-            ObservationPointId::fromString($this->boundaryId->toString()),
-            ObservationPointName::fromString($this->name->toString()),
-            $this->geometry
-        );
-    }
-
-    public function findValueByDateTime(\DateTimeImmutable $dateTime): RechargeDateTimeValue
+    public function findValueByDateTime(DateTime $dateTime): RechargeDateTimeValue
     {
         /** @var ObservationPoint $op */
-        $op = $this->getOp(ObservationPointId::fromString($this->boundaryId->toString()));
+        $observationPointId = ObservationPointId::fromString('OP');
+        $op = $this->getObservationPoint($observationPointId);
         $value = $op->findValueByDateTime($dateTime);
 
         if ($value instanceof RechargeDateTimeValue){
@@ -105,5 +73,18 @@ class RechargeBoundary extends AbstractBoundary
         }
 
         return RechargeDateTimeValue::fromParams($dateTime, 0);
+    }
+
+    public function toArray(): array
+    {
+        return array(
+            'id' => $this->boundaryId()->toString(),
+            'type' => $this->type()->toString(),
+            'name' => $this->name()->toString(),
+            'geometry' => $this->geometry()->toArray(),
+            'affected_layers' => $this->affectedLayers()->toArray(),
+            'metadata' => $this->metadata()->toArray(),
+            'date_time_values' => $this->getObservationPoint(ObservationPointId::fromString('OP'))->dateTimeValues()->toArray()
+        );
     }
 }

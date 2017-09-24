@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Inowas\ModflowModel\Model\Handler;
 
+use Inowas\ModflowModel\Infrastructure\Projection\ModelList\ModelFinder;
 use Inowas\ModflowModel\Model\Command\UpdateLengthUnit;
 use Inowas\ModflowModel\Model\Exception\ModflowModelNotFoundException;
 use Inowas\ModflowModel\Model\Exception\WriteAccessFailedException;
@@ -13,14 +14,19 @@ use Inowas\ModflowModel\Model\ModflowModelAggregate;
 final class UpdateLengthUnitHandler
 {
 
+    /** @var  ModelFinder */
+    private $modelFinder;
+
     /** @var  ModflowModelList */
     private $modelList;
 
     /**
      * @param ModflowModelList $modelList
+     * @param ModelFinder $modelFinder
      */
-    public function __construct(ModflowModelList $modelList)
+    public function __construct(ModflowModelList $modelList, ModelFinder $modelFinder)
     {
+        $this->modelFinder = $modelFinder;
         $this->modelList = $modelList;
     }
 
@@ -33,10 +39,15 @@ final class UpdateLengthUnitHandler
             throw ModflowModelNotFoundException::withModelId($command->modelId());
         }
 
-        if (! $modflowModel->ownerId()->sameValueAs($command->userId())){
-            throw WriteAccessFailedException::withUserAndOwner($command->userId(), $modflowModel->ownerId());
+        if (! $modflowModel->userId()->sameValueAs($command->userId())){
+            throw WriteAccessFailedException::withUserAndOwner($command->userId(), $modflowModel->userId());
         }
 
-        $modflowModel->updateLengthUnit($command->userId(), $command->lengthUnit());
+        $currentLengthunit = $this->modelFinder->getLengthUnitByModelId($command->modelId());
+
+        if (! $currentLengthunit->sameAs($command->lengthUnit())) {
+            $modflowModel->updateLengthUnit($command->userId(), $command->lengthUnit());
+            $this->modelList->save($modflowModel);
+        }
     }
 }

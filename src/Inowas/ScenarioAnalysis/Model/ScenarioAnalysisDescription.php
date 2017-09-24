@@ -23,4 +23,13 @@ class ScenarioAnalysisDescription
     {
         return $this->description;
     }
+
+    public function sameAs($name): bool
+    {
+        if (! $name instanceof self) {
+            return false;
+        }
+
+        return $name->toString() === $this->toString();
+    }
 }

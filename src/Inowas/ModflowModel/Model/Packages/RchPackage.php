@@ -39,7 +39,7 @@ class RchPackage implements PackageInterface
     {
         $ipakcb = Ipakcb::fromInteger(0);
         $nrchop = Nrchop::highestActiveCell();
-        $stressPeriodData = RchStressPeriodData::create()->addStressPeriodValue(RchStressPeriodValue::fromParams(0, Rech::fromFloat(1e-3)));
+        $stressPeriodData = RchStressPeriodData::create()->addStressPeriodValue(RchStressPeriodValue::fromParams(0, Rech::fromFloat(0)));
         $irch = Irch::fromInteger(0);
         $extension = Extension::fromString('rch');
         $unitnumber = Unitnumber::fromInteger(19);
@@ -144,19 +144,12 @@ class RchPackage implements PackageInterface
         return $this->type;
     }
 
-    public function toArray(): array
+    public function isValid(): bool
     {
-        return array(
-            'ipakcb' => $this->ipakcb->toInteger(),
-            'nrchop' => $this->nrchop->toInteger(),
-            'stress_period_data' => $this->stressPeriodData->toArray(),
-            'irch' => $this->irch->toValue(),
-            'extension' => $this->extension->toValue(),
-            'unitnumber' => $this->unitnumber->toValue()
-        );
+        return $this->stressPeriodData->hasData();
     }
 
-    public function jsonSerialize(): array
+    public function toArray(): array
     {
         return array(
             'ipakcb' => $this->ipakcb->toInteger(),
@@ -166,5 +159,18 @@ class RchPackage implements PackageInterface
             'extension' => $this->extension->toValue(),
             'unitnumber' => $this->unitnumber->toValue()
         );
+    }
+
+    public function getEditables(): array
+    {
+        return $this->toArray();
+    }
+
+    public function mergeEditables(array $arr): void
+    {}
+
+    public function jsonSerialize(): array
+    {
+        return $this->toArray();
     }
 }

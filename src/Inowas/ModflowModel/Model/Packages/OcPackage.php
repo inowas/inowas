@@ -11,8 +11,6 @@ use Inowas\Common\Modflow\Compact;
 use Inowas\Common\Modflow\Extension;
 use Inowas\Common\Modflow\Iddnfm;
 use Inowas\Common\Modflow\Ihedfm;
-use Inowas\Common\Modflow\OcStressPeriod;
-use Inowas\Common\Modflow\OcStressPeriodData;
 use Inowas\Common\Modflow\Unitnumber;
 
 class OcPackage implements PackageInterface
@@ -191,6 +189,11 @@ class OcPackage implements PackageInterface
         return $this->type;
     }
 
+    public function isValid(): bool
+    {
+        return true;
+    }
+
     public function toArray(): array
     {
         return array(
@@ -204,6 +207,14 @@ class OcPackage implements PackageInterface
             'unitnumber' => $this->unitnumber->toValue()
         );
     }
+
+    public function getEditables(): array
+    {
+        return $this->toArray();
+    }
+
+    public function mergeEditables(array $arr): void
+    {}
 
     /**
      * @return array

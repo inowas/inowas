@@ -4,87 +4,59 @@ declare(strict_types=1);
 
 namespace Inowas\ModflowModel\Model\Command;
 
+use Inowas\Common\Command\AbstractJsonSchemaCommand;
 use Inowas\Common\Id\ModflowId;
 use Inowas\Common\Id\UserId;
-use Inowas\Common\Soilmodel\SoilmodelId;
-use Prooph\Common\Messaging\Command;
-use Prooph\Common\Messaging\PayloadConstructable;
-use Prooph\Common\Messaging\PayloadTrait;
 
-class CloneModflowModel extends Command implements PayloadConstructable
+class CloneModflowModel extends AbstractJsonSchemaCommand
 {
 
-    use PayloadTrait;
-
     /** @noinspection MoreThanThreeArgumentsInspection
      * @param ModflowId $baseModelId
      * @param UserId $userId
      * @param ModflowId $newModelId
-     * @param SoilmodelId $newSoilmodelId
-     * @param ModflowId $newCalculationId
+     * @param bool $isTool
      * @return CloneModflowModel
      */
-    public static function byIdAndCloneSoilmodel(ModflowId $baseModelId, UserId $userId, ModflowId $newModelId, SoilmodelId $newSoilmodelId, ModflowId $newCalculationId): CloneModflowModel
+    public static function byId(ModflowId $baseModelId, UserId $userId, ModflowId $newModelId, bool $isTool = false): CloneModflowModel
     {
-        return new self([
-            'basemodel_id' => $baseModelId->toString(),
-            'user_id' => $userId->toString(),
-            'new_model_id' => $newModelId->toString(),
-            'new_soilmodel_id' => $newSoilmodelId->toString(),
-            'new_calculation_id' => $newCalculationId->toString()
+        $self = new static([
+            'id' => $baseModelId->toString(),
+            'new_id' => $newModelId->toString(),
+            'is_tool' => $isTool
         ]);
+
+        /** @var CloneModflowModel $self */
+        $self = $self->withAddedMetadata('user_id', $userId->toString());
+        return $self;
     }
 
-    /** @noinspection MoreThanThreeArgumentsInspection
-     * @param ModflowId $baseModelId
-     * @param UserId $userId
-     * @param ModflowId $newModelId
-     * @param SoilmodelId $existingSoilmodelId
-     * @param ModflowId $newCalculationId
-     * @return CloneModflowModel
-     */
-    public static function byIdWithExistingSoilmodel(ModflowId $baseModelId, UserId $userId, ModflowId $newModelId, SoilmodelId $existingSoilmodelId, ModflowId $newCalculationId): CloneModflowModel
+    public function schema(): string
     {
-        return new self([
-            'basemodel_id' => $baseModelId->toString(),
-            'user_id' => $userId->toString(),
-            'new_model_id' => $newModelId->toString(),
-            'existing_soilmodel_id' => $existingSoilmodelId->toString(),
-            'new_calculation_id' => $newCalculationId->toString()
-        ]);
+        return 'file://spec/schema/modflow/command/cloneModflowModelPayload.json';
     }
 
     public function userId(): UserId
     {
-        return UserId::fromString($this->payload['user_id']);
+        return UserId::fromString($this->metadata['user_id']);
     }
 
-    public function baseModelId(): ModflowId
+    public function modelId(): ModflowId
     {
-        return ModflowId::fromString($this->payload['basemodel_id']);
+        return ModflowId::fromString($this->payload['id']);
     }
 
     public function newModelId(): ModflowId
     {
-        return ModflowId::fromString($this->payload['new_model_id']);
+        return ModflowId::fromString($this->payload['new_id']);
     }
 
-    public function soilmodelId(): SoilmodelId
+    public function isTool(): bool
     {
-        if ($this->cloneSoilmodel()) {
-            return SoilmodelId::fromString($this->payload['new_soilmodel_id']);
+        if (!array_key_exists('is_tool', $this->payload()) ) {
+            return false;
         }
 
-        return SoilmodelId::fromString($this->payload['existing_soilmodel_id']);
-    }
-
-    public function cloneSoilmodel(): bool
-    {
-        return array_key_exists('new_soilmodel_id', $this->payload);
-    }
-
-    public function newCalculationId(): ModflowId
-    {
-        return ModflowId::fromString($this->payload['new_calculation_id']);
+        return $this->payload['is_tool'];
     }
 }

@@ -34,5 +34,6 @@ final class ChangeSoilmodelNameHandler
         }
 
         $soilmodel->changeName($command->userId(), $command->name());
+        $this->soilmodelList->save($soilmodel);
     }
 }

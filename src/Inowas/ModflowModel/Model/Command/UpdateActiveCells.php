@@ -17,7 +17,7 @@ class UpdateActiveCells extends Command implements PayloadConstructable
 
     use PayloadTrait;
 
-    public static function ofModelBoundary(
+    public static function ofBoundaryWithIds(
         UserId $userId,
         ModflowId $modelId,
         BoundaryId $boundaryId,
@@ -34,7 +34,7 @@ class UpdateActiveCells extends Command implements PayloadConstructable
         return new self($payload);
     }
 
-    public static function ofModelArea(
+    public static function ofModelAreaWithIds(
         UserId $userId,
         ModflowId $modelId,
         ActiveCells $activeCells
@@ -43,7 +43,7 @@ class UpdateActiveCells extends Command implements PayloadConstructable
         $payload = [
             'user_id' => $userId->toString(),
             'model_id' => $modelId->toString(),
-            'boundary_id' => $modelId->toString(),
+            'boundary_id' => null,
             'active_cells' => $activeCells->toArray()
         ];
 
@@ -60,8 +60,12 @@ class UpdateActiveCells extends Command implements PayloadConstructable
         return ModflowId::fromString($this->payload['model_id']);
     }
 
-    public function boundaryId(): BoundaryId
+    public function boundaryId(): ?BoundaryId
     {
+        if (null === $this->payload['boundary_id']) {
+            return null;
+        }
+
         return BoundaryId::fromString($this->payload['boundary_id']);
     }
 
@@ -70,8 +74,8 @@ class UpdateActiveCells extends Command implements PayloadConstructable
         return ActiveCells::fromArray($this->payload['active_cells']);
     }
 
-    public function isArea(): bool
+    public function isModelArea(): bool
     {
-        return $this->modelId()->sameValueAs($this->boundaryId());
+        return null === $this->payload['boundary_id'];
     }
 }

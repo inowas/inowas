@@ -31,7 +31,7 @@ class Steady
         return $this->steady;
     }
 
-    public function isArray()
+    public function isArray(): bool
     {
         return is_array($this->steady);
     }

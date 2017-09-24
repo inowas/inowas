@@ -148,8 +148,10 @@ class ToolController extends InowasRestController
 
         switch ($toolType->toString()) {
             case ToolType::SCENARIOANALYSIS:
-                $this->get('prooph_service_bus.modflow_command_bus')->dispatch(CloneScenarioAnalysis::byUserWithId(
-                    $userId, ScenarioAnalysisId::fromString($projectId->toString())
+                $this->get('prooph_service_bus.modflow_command_bus')->dispatch(CloneScenarioAnalysis::byUserWithIds(
+                    $userId,
+                    ScenarioAnalysisId::fromString($projectId->toString()),
+                    ScenarioAnalysisId::generate()
                 ));
                 break;
         }

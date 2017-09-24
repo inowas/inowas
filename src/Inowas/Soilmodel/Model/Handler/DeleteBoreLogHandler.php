@@ -30,5 +30,6 @@ final class DeleteBoreLogHandler
         }
 
         $boreLog->delete($command->userId());
+        $this->boreLogList->save($boreLog);
     }
 }

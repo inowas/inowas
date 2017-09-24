@@ -1,24 +1,51 @@
 services:
-    inowas.modflowmodel.model_boundaries_active_cells_projector:
-        class: Inowas\ModflowModel\Infrastructure\Projection\BoundaryList\BoundaryActiveCellsProjector
-        arguments:
-          - '@doctrine.dbal.default_connection'
-          - '@inowas.modflowmodel.model_finder'
-          - '@inowas.modflowmodel.boundaries_finder'
-          - '@inowas.geotools.geotools_service'
-
-    inowas.modflowmodel.model_boundaries_list_projector:
-        class: Inowas\ModflowModel\Infrastructure\Projection\BoundaryList\BoundaryListProjector
+    inowas.modflowmodel.active_cells_finder:
+        class: Inowas\ModflowModel\Infrastructure\Projection\ActiveCells\ActiveCellsFinder
         arguments:
           - '@doctrine.dbal.default_connection'
 
-    inowas.modflowmodel.model_boundaries_values_projector:
-        class: Inowas\ModflowModel\Infrastructure\Projection\BoundaryList\BoundaryObservationPointsProjector
+    inowas.modflowmodel.boundary_finder:
+        class: Inowas\ModflowModel\Infrastructure\Projection\BoundaryList\BoundaryFinder
         arguments:
           - '@doctrine.dbal.default_connection'
 
-    inowas.modflowmodel.model_details_projector:
+    inowas.modflowmodel.boundary_projector:
+        class: Inowas\ModflowModel\Infrastructure\Projection\BoundaryList\BoundaryProjector
+        arguments:
+          - '@doctrine.dbal.default_connection'
+
+    inowas.modflowmodel.blackhole_projector:
+        class: Inowas\ModflowModel\Infrastructure\Projection\Blackhole\BlackholeProjector
+
+    inowas.modflowmodel.calculation_results_finder:
+        class: Inowas\ModflowModel\Infrastructure\Projection\Calculation\CalculationResultsFinder
+        arguments:
+          - '@doctrine.dbal.default_connection'
+          - '@inowas.modflowmodel.amqp_read_data'
+
+    inowas.modflowmodel.calculation_results_projector:
+        class: Inowas\ModflowModel\Infrastructure\Projection\Calculation\CalculationResultsProjector
+        arguments:
+          - '@doctrine.dbal.default_connection'
+
+    inowas.modflowmodel.model_finder:
+        class: Inowas\ModflowModel\Infrastructure\Projection\ModelList\ModelFinder
+        arguments:
+          - '@doctrine.dbal.default_connection'
+
+    inowas.modflowmodel.model_projector:
         class: Inowas\ModflowModel\Infrastructure\Projection\ModelList\ModelProjector
         arguments:
           - '@doctrine.dbal.default_connection'
           - '@doctrine.orm.default_entity_manager'
+
+    inowas.modflowmodel.soilmodel_finder:
+        class: Inowas\ModflowModel\Infrastructure\Projection\Soilmodel\SoilmodelFinder
+        arguments:
+          - '@doctrine.dbal.default_connection'
+          - '@inowas.modflowmodel.layers_persister'
+
+    inowas.modflowmodel.soilmodel_projector:
+        class: Inowas\ModflowModel\Infrastructure\Projection\Soilmodel\SoilmodelProjector
+        arguments:
+          - '@doctrine.dbal.default_connection'

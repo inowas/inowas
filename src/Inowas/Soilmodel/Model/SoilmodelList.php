@@ -9,7 +9,7 @@ use Inowas\Common\Soilmodel\SoilmodelId;
 
 interface SoilmodelList
 {
-    public function add(SoilmodelAggregate $soilmodel);
-
     public function get(SoilmodelId $soilmodelId);
+
+    public function save(SoilmodelAggregate $soilmodel);
 }

@@ -5,12 +5,6 @@ services:
             - '@prooph_service_bus.modflow_command_bus'
             - '@scenarioanalysis_list'
 
-    inowas.scenarioanalysis.clone_scenario_process_manager:
-        class: Inowas\ScenarioAnalysis\Infrastructure\ProcessManager\CloneScenarioProcessManager
-        arguments:
-            - '@prooph_service_bus.modflow_command_bus'
-            - '@modflow_model_list'
-
     inowas.scenarioanalysis.create_scenario_process_manager:
         class: Inowas\ScenarioAnalysis\Infrastructure\ProcessManager\CreateScenarioProcessManager
         arguments:

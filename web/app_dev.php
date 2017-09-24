@@ -18,6 +18,8 @@ if (isset($_SERVER['HTTP_CLIENT_IP'])
     exit('You are not allowed to access this file. Check '.basename(__FILE__).' for more information.');
 }
 
+chdir(dirname(__DIR__));
+
 /**
  * @var Composer\Autoload\ClassLoader $loader
  */

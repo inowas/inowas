@@ -1,0 +1,25 @@
+{
+    "uuid": "457cd469-670e-48c8-a40a-748cf36f641e",
+    "message_name": "updateLayer",
+    "metadata": {},
+    "payload": {
+        "id": "f3f6788a-61a6-410e-a14d-af7ecca6babb",
+        "layer_id": "l0",
+        "layer": {
+            "id": "l0",
+            "name": "Name Layer 0",
+            "description": "Description Layer 0",
+            "number": 0,
+            "top": 10.0,
+            "botm": 5.0,
+            "hk": 100.0,
+            "hani": 1,
+            "vka": 10,
+            "layavg": 0,
+            "laytyp": 1,
+            "laywet": 0,
+            "ss": 1e-5,
+            "sy": 0.15
+        }
+    }
+}

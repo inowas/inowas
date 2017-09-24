@@ -40,6 +40,7 @@ class ScenarioAnalysisWasCreated extends AggregateChanged
      */
     public static function byUserWithId(ScenarioAnalysisId $id, UserId $userId, ModflowId $baseModelId, ScenarioAnalysisName $name, ScenarioAnalysisDescription $description): ScenarioAnalysisWasCreated
     {
+        /** @var ScenarioAnalysisWasCreated $event */
         $event = self::occur($id->toString(),[
             'basemodel_id' => $baseModelId->toString(),
             'user_id' => $userId->toString(),

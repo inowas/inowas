@@ -8,7 +8,7 @@ use Inowas\Common\Id\ModflowId;
 
 interface ModflowModelList
 {
-    public function add(ModflowModelAggregate $model);
-
     public function get(ModflowId $modelId);
+
+    public function save(ModflowModelAggregate $model);
 }

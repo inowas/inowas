@@ -7,14 +7,14 @@ namespace Inowas\ScenarioAnalysis\Infrastructure\Repository;
 use Inowas\ScenarioAnalysis\Model\ScenarioAnalysisAggregate;
 use Inowas\ScenarioAnalysis\Model\ScenarioAnalysisId;
 use Inowas\ScenarioAnalysis\Model\ScenarioAnalysisList;
-use Prooph\EventStore\Aggregate\AggregateRepository;
+use Prooph\EventSourcing\Aggregate\AggregateRepository;
 
 class EventStoreScenarioAnalysisList extends AggregateRepository implements ScenarioAnalysisList
 {
 
-    public function add(ScenarioAnalysisAggregate $scenarioAnalysis)
+    public function save(ScenarioAnalysisAggregate $scenarioAnalysis)
     {
-        $this->addAggregateRoot($scenarioAnalysis);
+        $this->saveAggregateRoot($scenarioAnalysis);
     }
 
     public function get(ScenarioAnalysisId $scenarioAnalysisId)

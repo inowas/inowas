@@ -9,5 +9,9 @@
             <argument type="service" id="doctrine.orm.default_entity_manager"/>
             <argument type="service" id="fos_user.user_manager"/>
         </service>
+
+        <service id="inowas.user_permissions" class="Inowas\AppBundle\Service\UserPermissionService">
+            <argument type="service" id="inowas.modflowmodel.model_finder"/>
+        </service>
     </services>
 </container>

@@ -5,75 +5,31 @@ declare(strict_types=1);
 namespace Inowas\ModflowBundle\Controller;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
+use Inowas\Common\Calculation\HeadData;
 use Inowas\Common\Calculation\ResultType;
-use Inowas\Common\DateTime\DateTime;
+use Inowas\Common\Calculation\TimeSeriesData;
 use Inowas\Common\DateTime\TotalTime;
 use Inowas\Common\Grid\LayerNumber;
 use Inowas\Common\Grid\Ncol;
 use Inowas\Common\Grid\Nrow;
-use Inowas\Common\Id\ModflowId;
+use Inowas\Common\Id\CalculationId;
+use Inowas\Common\Modflow\Extension;
 use Inowas\Common\Modflow\LayerValues;
-use Inowas\Common\Modflow\StressPeriods;
 use Inowas\Common\Modflow\TotalTimes;
 use Inowas\ModflowBundle\Exception\NotFoundException;
-use Inowas\ModflowCalculation\Model\Command\CalculateModflowModelCalculation;
-use Inowas\ModflowCalculation\Model\Command\CreateModflowModelCalculation;
-use Inowas\ModflowCalculation\Model\Command\UpdateCalculationStressperiods;
 use Nelmio\ApiDocBundle\Annotation\ApiDoc;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\RedirectResponse;
-use Symfony\Component\HttpFoundation\Request;
 
 /** @noinspection LongInheritanceChainInspection */
 class ModflowCalculationController extends InowasRestController
 {
+
     /**
-     * Creates a new calculation.
+     * Get details of last calculation of modflow model by id.
      *
      * @ApiDoc(
      *   resource = true,
-     *   description = "Creates a new calculation.",
-     *   statusCodes = {
-     *     302 = "Redirect to the calculation"
-     *   }
-     * )
-     *
-     * @Rest\Post("/calculations")
-     * @param Request $request
-     * @return RedirectResponse
-     * @throws \Prooph\ServiceBus\Exception\CommandDispatchException
-     * @throws \InvalidArgumentException
-     */
-    public function postCalculationsAction(Request $request): RedirectResponse
-    {
-        $userId = $this->getUserId();
-        $calculationId = ModflowId::generate();
-
-        $content = $this->getContentAsArray($request);
-        $this->assertContainsKey('model_id', $content);
-        $modelId = ModflowId::fromString($content['model_id']);
-
-        $this->assertContainsKey('start_date_time', $content);
-        $startDateTime = DateTime::fromAtom($content['start_date_time']);
-
-        $this->assertContainsKey('end_date_time', $content);
-        $endDateTime = DateTime::fromAtom($content['end_date_time']);
-
-        $commandBus = $this->get('prooph_service_bus.modflow_command_bus');
-        $commandBus->dispatch(CreateModflowModelCalculation::byUserWithModelId($calculationId, $userId, $modelId, $startDateTime, $endDateTime));
-
-        return new RedirectResponse(
-            $this->generateUrl('get_calculation_details', array('id' => $calculationId->toString())),
-            302
-        );
-    }
-
-    /**
-     * Get calculation details by calculationId.
-     *
-     * @ApiDoc(
-     *   resource = true,
-     *   description = "Returns the calculation details of a calculation by calculationId.",
+     *   description = "Get details of last calculation of modflow model by id.",
      *   statusCodes = {
      *     200 = "Returned when successful"
      *   }
@@ -82,124 +38,18 @@ class ModflowCalculationController extends InowasRestController
      * @param string $id
      * @Rest\Get("/calculations/{id}")
      * @return JsonResponse
+     * @throws NotFoundException
      */
     public function getCalculationDetailsAction(string $id): JsonResponse
     {
-        $this->assertUuidIsValid($id);
-        $calculationId = ModflowId::fromString($id);
+        $calculationId = CalculationId::fromString($id);
+        $calculationDetails = $this->get('inowas.modflowmodel.calculation_results_finder')->getCalculationDetailsById($calculationId);
 
-        $result = $this->get('inowas.modflowcalculation.calculation_list_finder')->findCalculationById($calculationId);
-
-        if (null === $result) {
-            throw NotFoundException::withMessage(sprintf(
-                'Calculation with id: \'%s\' not found.', $calculationId->toString()
-            ));
+        if (! is_array($calculationDetails)) {
+            throw NotFoundException::withMessage(sprintf('Calculation with id: \'%s\' not found.', $id));
         }
 
-        return new JsonResponse($result);
-    }
-
-    /**
-     * Starts a calculation by calculationId.
-     *
-     * @ApiDoc(
-     *   resource = true,
-     *   description = "Starts a calculation by calculationId.",
-     *   statusCodes = {
-     *     302 = "Redirect to the calculation"
-     *   }
-     * )
-     *
-     * @Rest\Post("/calculations/{id}/calculate")
-     * @param string $id
-     * @return RedirectResponse
-     */
-    public function postCalculationCalculateAction(string $id): RedirectResponse
-    {
-        $userId = $this->getUserId();
-
-        $this->assertUuidIsValid($id);
-        $calculationId = ModflowId::fromString($id);
-
-        $commandBus = $this->get('prooph_service_bus.modflow_command_bus');
-        $commandBus->dispatch(CalculateModflowModelCalculation::byUserWithCalculationId($userId, $calculationId));
-
-        return new RedirectResponse(
-            $this->generateUrl('get_calculation_details', array('id' => $calculationId->toString())),
-            302
-        );
-    }
-
-    /**
-     * Get calculation stressperiods by calculationId.
-     *
-     * @ApiDoc(
-     *   resource = true,
-     *   description = "Returns the stressperiods of a calculation by id.",
-     *   statusCodes = {
-     *     200 = "Returned when successful"
-     *   }
-     * )
-     *
-     * @param string $id
-     * @Rest\Get("/calculations/{id}/stressperiods")
-     * @return JsonResponse
-     */
-    public function getCalculationStressperiodsAction(string $id): JsonResponse
-    {
-        $this->assertUuidIsValid($id);
-        $calculationId = ModflowId::fromString($id);
-
-        $stressPeriods = $this->get('inowas.modflowcalculation.calculation_configuration_finder')->getStressPeriodsFromCalculationById($calculationId);
-
-        if (! $stressPeriods instanceof StressPeriods) {
-            throw NotFoundException::withMessage(sprintf(
-                'Calculation with id: \'%s\' not found.', $calculationId->toString()
-            ));
-        }
-
-        return new JsonResponse($stressPeriods);
-    }
-
-    /**
-     * Put calculation stressperiods by calculationId.
-     *
-     * @ApiDoc(
-     *   resource = true,
-     *   description = "Updated the stressperiods of a calculation by id.",
-     *   statusCodes = {
-     *     200 = "Returned when successful"
-     *   }
-     * )
-     *
-     * @param string $id
-     * @param Request $request
-     * @Rest\Put("/calculations/{id}/stressperiods")
-     * @return RedirectResponse
-     */
-    public function putCalculationStressperiodsAction(string $id, Request $request): RedirectResponse
-    {
-        $userId = $this->getUserId();
-
-        $this->assertUuidIsValid($id);
-        $calculationId = ModflowId::fromString($id);
-
-        $content = $this->getContentAsArray($request);
-
-        $this->assertContainsKey('start_date_time', $content);
-        $this->assertContainsKey('end_date_time', $content);
-        $this->assertContainsKey('time_unit', $content);
-        $this->assertContainsKey('stress_periods', $content);
-
-        $stressPeriods = StressPeriods::createFromArray($content);
-
-        $commandBus = $this->get('prooph_service_bus.modflow_command_bus');
-        $commandBus->dispatch(UpdateCalculationStressperiods::byUserWithCalculationId($userId, $calculationId, $stressPeriods));
-
-        return new RedirectResponse(
-            $this->generateUrl('get_calculation_stressperiods', array('id' => $calculationId->toString())),
-            302
-        );
+        return new JsonResponse($calculationDetails);
     }
 
     /**
@@ -216,18 +66,13 @@ class ModflowCalculationController extends InowasRestController
      * @param string $id
      * @Rest\Get("/calculations/{id}/results/times")
      * @return JsonResponse
+     * @throws NotFoundException
      */
     public function getCalculationResultsTimesAction(string $id): JsonResponse
     {
-        $this->assertUuidIsValid($id);
-        $calculationId = ModflowId::fromString($id);
-
-        $totalTimes = $this->get('inowas.modflowcalculation.calculation_results_finder')->getTotalTimesFromCalculationById($calculationId);
-
+        $totalTimes = $this->get('inowas.modflowmodel.calculation_results_finder')->getTotalTimesFromCalculationById(CalculationId::fromString($id));
         if (! $totalTimes instanceof TotalTimes) {
-            throw NotFoundException::withMessage(sprintf(
-                'Calculation with id: \'%s\' not found.', $calculationId->toString()
-            ));
+            throw NotFoundException::withMessage(sprintf('Calculation with id: \'%s\' not found.', $id));
         }
 
         return new JsonResponse($totalTimes);
@@ -247,24 +92,63 @@ class ModflowCalculationController extends InowasRestController
      * @param string $id
      * @Rest\Get("/calculations/{id}/results/layervalues")
      * @return JsonResponse
+     * @throws NotFoundException
      */
     public function getCalculationResultsLayerValuesAction(string $id): JsonResponse
     {
-        $this->assertUuidIsValid($id);
-        $calculationId = ModflowId::fromString($id);
-
-        $layerValues = $this->get('inowas.modflowcalculation.calculation_results_finder')->findLayerValues($calculationId);
+        $layerValues = $this->get('inowas.modflowmodel.calculation_results_finder')->findLayerValues(CalculationId::fromString($id));
 
         if (! $layerValues instanceof LayerValues) {
-            throw NotFoundException::withMessage(sprintf(
-                'Calculation with id: \'%s\' not found.', $calculationId->toString()
-            ));
+            throw NotFoundException::withMessage(sprintf('Calculation with id: \'%s\' not found.', $id));
         }
 
         return new JsonResponse($layerValues);
     }
 
     /**
+     * Get file of modflow calculation
+     *
+     * @ApiDoc(
+     *   resource = true,
+     *   description = "Returns the file of modflow calculation.",
+     *   statusCodes = {
+     *     200 = "Returned when successful"
+     *   }
+     * )
+     *
+     * @Rest\Get("/calculations/{id}/file/{extension}")
+     * @param string $id
+     * @param string $extension
+     * @return JsonResponse
+     */
+    public function getCalculationFileAction(string $id, string $extension): JsonResponse
+    {
+        $file = $this->get('inowas.modflowmodel.calculation_results_finder')->getFile(CalculationId::fromString($id), Extension::fromString($extension));
+        return new JsonResponse($file);
+    }
+
+    /**
+     * Get fileList of modflow calculation
+     *
+     * @ApiDoc(
+     *   resource = true,
+     *   description = "Returns the fileList of modflow calculation.",
+     *   statusCodes = {
+     *     200 = "Returned when successful"
+     *   }
+     * )
+     *
+     * @Rest\Get("/calculations/{id}/filelist")
+     * @param string $id
+     * @return JsonResponse
+     */
+    public function getCalculationFileListAction(string $id): JsonResponse
+    {
+        $list = $this->get('inowas.modflowmodel.calculation_results_finder')->getFileList(CalculationId::fromString($id));
+        return new JsonResponse($list);
+    }
+
+    /** @noinspection MoreThanThreeArgumentsInspection
      * Get calculation headValues by calculationId.
      *
      * @ApiDoc(
@@ -281,24 +165,27 @@ class ModflowCalculationController extends InowasRestController
      * @param string $totim
      * @Rest\Get("/calculations/{id}/results/types/{type}/layers/{layer}/totims/{totim}")
      * @return JsonResponse
+     * @throws \Inowas\ModflowBundle\Exception\NotFoundException
      */
     public function getCalculationHeadResultsByTypeLayerAndTotimAction(string $id, string $type, string $layer, string $totim): JsonResponse
     {
-        $this->assertUuidIsValid($id);
-        $calculationId = ModflowId::fromString($id);
-
+        /** @var ResultType $type */
         $type = ResultType::fromString($type);
-        $layerNumber = LayerNumber::fromInteger((int)$layer);
+        $layerNumber = LayerNumber::fromInt((int)$layer);
         $totim = TotalTime::fromInt((int)$totim);
 
-        $headValue = $this->get('inowas.modflowcalculation.calculation_results_finder')->findHeadValue(
-            $calculationId,
+        $headData = $this->get('inowas.modflowmodel.calculation_results_finder')->findHeadData(
+            CalculationId::fromString($id),
             $type,
             $layerNumber,
             $totim
         );
 
-        return new JsonResponse($headValue);
+        if (! $headData instanceof HeadData) {
+            throw NotFoundException::withMessage('HeadData not found.');
+        }
+
+        return new JsonResponse($headData);
     }
 
     /**
@@ -319,20 +206,19 @@ class ModflowCalculationController extends InowasRestController
      * @param string $totim
      * @Rest\Get("/calculations/{id}/results/differences/{id2}/types/{type}/layers/{layer}/totims/{totim}")
      * @return JsonResponse
+     * @throws \Inowas\ModflowBundle\Exception\NotFoundException
      */
     public function getCalculationHeadResultsDifferenceByTypeLayerAndTotimAction(string $id, string $id2, string $type, string $layer, string $totim): JsonResponse
     {
-        $this->assertUuidIsValid($id);
-        $calculationId = ModflowId::fromString($id);
 
-        $this->assertUuidIsValid($id2);
-        $calculationId2 = ModflowId::fromString($id2);
+        $calculationId = CalculationId::fromString($id);
+        $calculationId2 = CalculationId::fromString($id2);
 
         $type = ResultType::fromString($type);
-        $layerNumber = LayerNumber::fromInteger((int)$layer);
+        $layerNumber = LayerNumber::fromInt((int)$layer);
         $totim = TotalTime::fromInt((int)$totim);
 
-        $headValue = $this->get('inowas.modflowcalculation.calculation_results_finder')->findHeadDifference(
+        $headData = $this->get('inowas.modflowmodel.calculation_results_finder')->findHeadDifference(
             $calculationId,
             $calculationId2,
             $type,
@@ -340,7 +226,11 @@ class ModflowCalculationController extends InowasRestController
             $totim
         );
 
-        return new JsonResponse($headValue);
+        if (! $headData instanceof HeadData) {
+            throw NotFoundException::withMessage('HeadData not found.');
+        }
+
+        return new JsonResponse($headData);
     }
 
     /**
@@ -361,24 +251,28 @@ class ModflowCalculationController extends InowasRestController
      * @param string $y
      * @Rest\Get("/calculations/{id}/results/timeseries/types/{type}/layers/{layer}/x/{x}/y/{y}")
      * @return JsonResponse
+     * @throws \Inowas\ModflowBundle\Exception\NotFoundException
      */
     public function getCalculationTimeseriesByTypeLayerXAndYAction(string $id, string $type, string $layer, string $x, string $y): JsonResponse
     {
-        $this->assertUuidIsValid($id);
-        $calculationId = ModflowId::fromString($id);
+        $calculationId = CalculationId::fromString($id);
 
         $type = ResultType::fromString($type);
-        $layerNumber = LayerNumber::fromInteger((int)$layer);
+        $layerNumber = LayerNumber::fromInt((int)$layer);
         $nCol = Ncol::fromInt((int)$x);
         $nRow = Nrow::fromInt((int)$y);
 
-        $timeSeriesData = $this->get('inowas.modflowcalculation.calculation_results_finder')->findTimeSeries(
+        $timeSeriesData = $this->get('inowas.modflowmodel.calculation_results_finder')->findTimeSeries(
             $calculationId,
             $type,
             $layerNumber,
             $nRow,
             $nCol
         );
+
+        if (! $timeSeriesData instanceof TimeSeriesData) {
+            throw NotFoundException::withMessage('HeadData not found.');
+        }
 
         return new JsonResponse($timeSeriesData);
     }

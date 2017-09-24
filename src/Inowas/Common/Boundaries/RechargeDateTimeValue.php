@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Inowas\Common\Boundaries;
 
+use Inowas\Common\DateTime\DateTime;
+
 class RechargeDateTimeValue extends DateTimeValue
 {
 
@@ -12,26 +14,22 @@ class RechargeDateTimeValue extends DateTimeValue
     /** @var float */
     private $rechargeRate;
 
-    /** @var  \DateTimeImmutable */
-    private $dateTime;
-
-
-    public static function fromParams(\DateTimeImmutable $dateTime, float $rechargeRate): RechargeDateTimeValue
+    public static function fromParams(DateTime $dateTime, float $rechargeRate): RechargeDateTimeValue
     {
         return new self($dateTime, $rechargeRate);
     }
 
     public static function fromArray(array $arr): RechargeDateTimeValue
     {
-        return new self(new \DateTimeImmutable($arr['date_time']), $arr['recharge_rate']);
+        return new self(DateTime::fromAtom($arr['date_time']), $arr['recharge_rate']);
     }
 
     public static function fromArrayValues(array $arr): RechargeDateTimeValue
     {
-        return new self(new \DateTimeImmutable($arr[0]), $arr[1]);
+        return new self(DateTime::fromAtom($arr[0]), $arr[1]);
     }
 
-    private function __construct(\DateTimeImmutable $dateTime, float $rechargeRate) {
+    private function __construct(DateTime $dateTime, float $rechargeRate) {
         $this->dateTime = $dateTime;
         $this->rechargeRate = $rechargeRate;
     }
@@ -46,7 +44,7 @@ class RechargeDateTimeValue extends DateTimeValue
         return self::TYPE;
     }
 
-    public function dateTime(): \DateTimeImmutable
+    public function dateTime(): DateTime
     {
         return $this->dateTime;
     }
@@ -54,8 +52,8 @@ class RechargeDateTimeValue extends DateTimeValue
     public function toArray(): array
     {
         return array(
-            'date_time' => $this->dateTime->format(DATE_ATOM),
-            'recharge_rate' => $this->rechargeRate
+            'date_time' => $this->dateTime->toAtom(),
+            'values' => [$this->rechargeRate]
         );
     }
 

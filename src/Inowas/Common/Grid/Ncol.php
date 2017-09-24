@@ -19,7 +19,7 @@ class Ncol
         $this->number = $number;
     }
 
-    public function toInteger(): int
+    public function toInt(): int
     {
         return $this->number;
     }

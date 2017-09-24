@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Inowas\Common\Geometry;
 
-use Inowas\Common\Boundaries\DateTimeValue;
 use Inowas\Common\Boundaries\ObservationPoint;
 
 final class LineStringWithObservationPoints
@@ -49,20 +48,8 @@ final class LineStringWithObservationPoints
     public function getDateTimes(): array
     {
         $dateTimes = [];
-        /** @var DateTimeValue $dateTimeValue */
-        foreach ($this->start->dateTimeValues() as $dateTimeValue) {
-            if (! in_array($dateTimeValue->dateTime(), $dateTimes)){
-                $dateTimes[] = $dateTimeValue->dateTime();
-            }
-        }
-
-        /** @var DateTimeValue $dateTimeValue */
-        foreach ($this->end->dateTimeValues() as $dateTimeValue) {
-            if (! in_array($dateTimeValue->dateTime(), $dateTimes)){
-                $dateTimes[] = $dateTimeValue->dateTime();
-            }
-        }
-
+        $dateTimes = array_merge($dateTimes, $this->start->dateTimeValues()->getDateTimes());
+        $dateTimes = array_merge($dateTimes, $this->end->dateTimeValues()->getDateTimes());
         return $dateTimes;
     }
 }

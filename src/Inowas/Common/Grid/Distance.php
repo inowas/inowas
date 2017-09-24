@@ -7,20 +7,20 @@ namespace Inowas\Common\Grid;
 class Distance
 {
     /** @var float */
-    protected $meters;
+    protected $distance;
 
-    public static function fromMeters(float $meters): Distance
+    public static function fromMeters(float $distance): Distance
     {
-        return new self($meters);
+        return new self($distance);
     }
 
     private function __construct(float $meters)
     {
-        $this->meters = $meters;
+        $this->distance = $meters;
     }
 
-    public function inMeters(): float
+    public function toFloat(): float
     {
-        return $this->meters;
+        return $this->distance;
     }
 }

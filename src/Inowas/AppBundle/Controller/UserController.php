@@ -55,18 +55,18 @@ class UserController extends InowasRestController
             throw new HttpException(401, 'Credentials are not valid.');
         }
 
-        $data = new \stdClass();
-        $data->api_key = $user->getApiKey();
+        $data = [];
+        $data['api_key'] = $user->getApiKey();
 
         return new JsonResponse($data);
     }
 
     /**
-     * Returns the userProfile for the user.
+     * Returns the user profile and roles of the user.
      *
      * @ApiDoc(
      *   resource = true,
-     *   description = "Returns the api-key of the user.",
+     *   description = "Returns the user profile and roles of the user.",
      *   statusCodes = {
      *     200 = "Returned when successful",
      *     404 = "Returned when the model is not found"
@@ -93,6 +93,7 @@ class UserController extends InowasRestController
         $response['user_name'] = $user->getUsername();
         $response['name'] = $user->getName();
         $response['email'] = $user->getEmail();
+        $response['roles'] = $user->getRoles();
 
         return new JsonResponse($response);
     }
@@ -146,6 +147,6 @@ class UserController extends InowasRestController
 
         $this->get('fos_user.user_manager')->updateUser($user);
 
-        return new RedirectResponse($this->generateUrl('get_calculation_details'), 302);
+        return new RedirectResponse($this->generateUrl('get_user_profile'), 303);
     }
 }

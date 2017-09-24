@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Inowas\GeoTools\Service;
 
 use Doctrine\DBAL\Connection;
-use Inowas\Common\Boundaries\Area;
+use Inowas\Common\Boundaries\DateTimeValuesCollection;
 use Inowas\Common\Boundaries\GridCellDateTimeValues;
 use Inowas\Common\Boundaries\ModflowBoundary;
 use Inowas\Common\Boundaries\ObservationPoint;
+use Inowas\Common\Boundaries\ObservationPointCollection;
+use Inowas\Common\DateTime\DateTime;
 use Inowas\Common\Geometry\Geometry;
 use Inowas\Common\Geometry\LineString;
 use Inowas\Common\Geometry\LineStringWithObservationPoints;
@@ -32,10 +34,10 @@ class GeoTools
         $this->connection = $connection;
     }
 
-    public function calculateActiveCellsFromArea(Area $area, BoundingBox $boundingBox, GridSize $gridSize): ActiveCells
+    public function calculateActiveCellsFromAreaPolygon(Polygon $areaPolygon, BoundingBox $boundingBox, GridSize $gridSize): ActiveCells
     {
-        $geometry = Geometry::fromPolygon($area->geometry());
-        $affectedLayers = AffectedLayers::createWithLayerNumber(LayerNumber::fromInteger(0));
+        $geometry = Geometry::fromPolygon($areaPolygon);
+        $affectedLayers = AffectedLayers::createWithLayerNumber(LayerNumber::fromInt(0));
 
         return $this->calculateActiveCellsFromGeometryAndAffectedLayers($geometry, $affectedLayers, $boundingBox, $gridSize);
     }
@@ -45,23 +47,31 @@ class GeoTools
         $geometry = $boundary->geometry();
         $affectedLayers = $boundary->affectedLayers();
         return $this->calculateActiveCellsFromGeometryAndAffectedLayers($geometry, $affectedLayers, $boundingBox, $gridSize);
-
     }
 
+    /** @noinspection MoreThanThreeArgumentsInspection
+     * @param Geometry $geometry
+     * @param AffectedLayers $affectedLayers
+     * @param BoundingBox $boundingBox
+     * @param GridSize $gridSize
+     * @return ActiveCells
+     */
     public function calculateActiveCellsFromGeometryAndAffectedLayers(Geometry $geometry, AffectedLayers $affectedLayers, BoundingBox $boundingBox, GridSize $gridSize): ActiveCells
     {
-        /** @var \Polygon $boundingBoxPolygon */
+        /** @var \Polygon $boundaryGeometry */
         $boundaryGeometry = \geoPHP::load($geometry->toJson(), 'json')->geos();
 
         /** @var \Polygon $boundingBoxPolygon */
         $boundingBoxPolygon = \geoPHP::load($boundingBox->toGeoJson(), 'json')->geos();
 
         if (! $boundingBoxPolygon->intersects($boundaryGeometry)) {
-            return ActiveCells::fromCells(array());
+            return ActiveCells::fromArrayGridSizeAndLayer(array(), $gridSize, $affectedLayers);
         }
 
-        if ($geometry->value() instanceof Point){
-            $gridCell = $this->getGridCellFromPoint($boundingBox, $gridSize, $geometry->value());
+        $point = $geometry->value();
+
+        if ($point instanceof Point){
+            $gridCell = $this->getGridCellFromPoint($boundingBox, $gridSize, $point);
             $activeCells = [];
             $activeCells[$gridCell['row']][$gridCell['col']] = true;
             return ActiveCells::fromArrayGridSizeAndLayer($activeCells, $gridSize, $affectedLayers);
@@ -73,11 +83,13 @@ class GeoTools
         $ny = $gridSize->nY();
 
         $activeCells = [];
+        /** @noinspection ForeachInvariantsInspection */
         for ($y = 0; $y<$ny; $y++){
             $activeCells[$y] = [];
+            /** @noinspection ForeachInvariantsInspection */
             for ($x = 0; $x<$nx; $x++){
                 /** @var \Polygon $bb */
-                $bb = \geoPHP::load(sprintf('LINESTRING(%f %f, %f %f)', $boundingBox->xMin()+(($x)*$dX), $boundingBox->yMax()-(($y)*$dY), $boundingBox->xMin()+(($x+1)*$dX), $boundingBox->yMax()-(($y+1)*$dY)), 'wkt')->envelope()->geos();
+                $bb = \geoPHP::load(sprintf('LINESTRING(%f %f, %f %f)', $boundingBox->xMin()+($x*$dX), $boundingBox->yMax()-($y*$dY), $boundingBox->xMin()+(($x+1)*$dX), $boundingBox->yMax()-(($y+1)*$dY)), 'wkt')->envelope()->geos();
                 $activeCells[$y][$x] = ($bb->intersects($boundaryGeometry) || $bb->crosses($boundaryGeometry));
             }
         }
@@ -87,54 +99,45 @@ class GeoTools
 
     public function getBoundingBox(Geometry $geometry): BoundingBox
     {
-        return $this->getBoundingBoxFromJson($geometry->toJson(), $geometry->srid());
+        return $this->getBoundingBoxFromJson($geometry->toJson());
     }
 
     public function getBoundingBoxFromPolygon(Polygon $polygon): BoundingBox
     {
-        return $this->getBoundingBoxFromJson($polygon->toJson(), Srid::fromInt($polygon->getSrid()));
+        return $this->getBoundingBoxFromJson($polygon->toJson());
     }
 
-    private function getBoundingBoxFromJson(string $json, Srid $srid): BoundingBox
+    private function getBoundingBoxFromJson(string $json): BoundingBox
     {
         $geometry = \geoPHP::load($json, 'json');
-        $geometry->setSRID($srid->toInteger());
         $bb = $geometry->getBBox();
 
-        $bb = BoundingBox::fromCoordinates($bb['minx'], $bb['maxx'], $bb['miny'], $bb['maxy'], $srid->toInteger(), 0,0);
-        return $this->updateBoundingBoxDistance($bb);
+        return BoundingBox::fromCoordinates($bb['minx'], $bb['maxx'], $bb['miny'], $bb['maxy']);
     }
 
     public function distanceInMeters(Point $pointA, Point $pointB): Distance
     {
-        $distance = \geoPHP::load(sprintf('LINESTRING(%f %f, %f %f)', $pointA->getX(), $pointA->getY(), $pointB->getX(), $pointB->getY(), 'wkt'))->greatCircleLength();
+        $distance = \geoPHP::load(sprintf('LINESTRING(%f %f, %f %f)', $pointA->getX(), $pointA->getY(), $pointB->getX(), $pointB->getY()), 'wkt')->greatCircleLength();
         return Distance::fromMeters($distance);
     }
 
-    public function projectBoundingBox(BoundingBox $boundingBox, Srid $target): BoundingBox
+    public function projectBoundingBox(BoundingBox $boundingBox, Srid $source, Srid $target): BoundingBox
     {
-        $topLeft = new Point($boundingBox->xMin(), $boundingBox->yMax(), $boundingBox->srid());
+
+        /** @var Point $topLeft */
+        $topLeft = $boundingBox->topLeft()->setSrid($source->toInteger());
         $topLeft = $this->projectPoint($topLeft, $target);
 
-        $bottomRight = new Point($boundingBox->xMax(), $boundingBox->yMin(), $boundingBox->srid());
+        /** @var Point $bottomRight */
+        $bottomRight = $boundingBox->bottomRight()->setSrid($source->toInteger());
         $bottomRight = $this->projectPoint($bottomRight, $target);
 
-        $bb = BoundingBox::fromCoordinates(
-            $topLeft->getX(),
-            $bottomRight->getX(),
-            $topLeft->getY(),
-            $bottomRight->getY(),
-            $target->toInteger(),
-            0,
-            0)
-        ;
-
-        return $this->updateBoundingBoxDistance($bb);
+        return BoundingBox::fromPoints($topLeft, $bottomRight);
     }
 
     public function projectPoint(Point $point, Srid $target): Point
     {
-        if ($point->getSrid() == $target->toInteger()){
+        if ($point->getSrid() === $target->toInteger()){
             return $point;
         }
 
@@ -165,9 +168,9 @@ class GeoTools
 
     public function getDistanceOfPointFromLineStringStartPoint(LineString $lineString, Point $p2): Distance
     {
-        $lineString = \geoPHP::load($lineString->toJson(),'json');
+        $lineString = \geoPHP::load($lineString->toJson(), 'json');
         $p1 = $lineString->startPoint();
-        $p2 = \geoPHP::load($p2->toJson(),'json');
+        $p2 = \geoPHP::load($p2->toJson(), 'json');
 
         $distanceInMeters = $this->getDistanceOfTwoPointsOnALineStringInGeoPhpFormat($lineString, $p1, $p2);
         return Distance::fromMeters($distanceInMeters);
@@ -218,11 +221,13 @@ class GeoTools
 
     /**
      * @param LineString $lineString
-     * @param ObservationPoint[] $observationPoints
+     * @param ObservationPointCollection $observationPointsCollection
      * @return array
      */
-    public function cutLinestringBetweenObservationPoints(LineString $lineString, array $observationPoints): array
+    public function cutLinestringBetweenObservationPoints(LineString $lineString, ObservationPointCollection $observationPointsCollection): array
     {
+        $observationPoints = $observationPointsCollection->toArrayValues();
+
         foreach ($observationPoints as $observationPoint){
             if (! $observationPoint instanceof ObservationPoint){
                 // @todo do something
@@ -231,17 +236,12 @@ class GeoTools
         }
 
         $distances = [];
+        /** @var ObservationPoint $observationPoint */
         foreach ($observationPoints as $observationPoint) {
-
-            $point = $observationPoint->geometry()->value();
-            if (! $point instanceof Point){
-                // @todo do something
-                return null;
-            }
-
+            $point = $observationPoint->geometry();
             $closestPoint = $this->getClosestPointOnLineString($lineString, $point);
             $distance = $this->getDistanceOfPointFromLineStringStartPoint($lineString, $closestPoint);
-            $distances[] = $distance->inMeters();
+            $distances[] = $distance->toFloat();
         }
 
         /* Sort by distance  */
@@ -251,8 +251,8 @@ class GeoTools
         $substringsWithObservationPoints = array();
         foreach ($observationPoints as $key => $observationPoint) {
             if ($key === 0){continue;}
-            $startPoint = $observationPoints[$key-1]->geometry()->value();
-            $endPoint = $observationPoints[$key]->geometry()->value();
+            $startPoint = $observationPoints[$key-1]->geometry();
+            $endPoint = $observationPoints[$key]->geometry();
             $substringsWithObservationPoints[] = LineStringWithObservationPoints::create(
                 $this->getSubstringOfLinestring($lineString, $startPoint, $endPoint),
                 $observationPoints[$key-1],
@@ -263,12 +263,11 @@ class GeoTools
         return $substringsWithObservationPoints;
     }
 
-    public function interpolateGridCellDateTimeValuesFromLinestringAndObservationPoints(LineString $lineString, array $observationPoints, ActiveCells $activeCells, BoundingBox $boundingBox, GridSize $gridSize): array
+    public function interpolateGridCellDateTimeValuesFromLinestringAndObservationPoints(LineString $lineString, ObservationPointCollection $observationPoints, ActiveCells $activeCells, BoundingBox $boundingBox, GridSize $gridSize): array
     {
         // @todo Cut Linestring with boundingBox
         // Cut Linestring into sectors between ObservationPoints
         /** @var LineStringWithObservationPoints[] $sectors */
-        $observationPoints = array_values($observationPoints);
         $sectors = $this->cutLinestringBetweenObservationPoints($lineString, $observationPoints);
 
         $gridCellDateTimeValues = array();
@@ -279,14 +278,14 @@ class GeoTools
             $column = $activeCell[2];
             $activeCellCenter = $this->getPointFromGridCell($boundingBox, $gridSize, $row, $column);
             $closestPoint = $this->getClosestPointOnLineString($lineString, $activeCellCenter);
-            $dateTimeValues = [];
+            $dateTimeValues = DateTimeValuesCollection::create();
 
             foreach ($sectors as $key => $sector){
                 if ($this->pointIsOnLineString($sector->linestring(), $closestPoint)) {
                     $factor = $this->getRelativeDistanceOfPointOnLineString($sector->linestring(), $closestPoint);
                     $dateTimes = $sector->getDateTimes();
 
-                    /** @var \DateTimeImmutable $dateTime */
+                    /** @var DateTime $dateTime */
                     foreach ($dateTimes as $dateTime){
                         $startValue = $sector->start()->findValueByDateTime($dateTime);
                         $endValue = $sector->end()->findValueByDateTime($dateTime);
@@ -298,16 +297,18 @@ class GeoTools
                             continue;
                         }
 
-                        $startArrayValues = $startValue->toArrayValues();
-                        $endArrayValues = $endValue->toArrayValues();
+                        $startArrayValues = array_values($startValue->values());
+                        $endArrayValues = array_values($endValue->values());
 
-                        $interpolatedDateTimeArrayValue = [$dateTime->format(DATE_ATOM)];
-                        for ($i=1; $i<count($startArrayValues); $i++){
+                        $interpolatedDateTimeArrayValue = [$dateTime->toAtom()];
+                        $nrOfStartArrayValues = count($startArrayValues);
+
+                        for ($i=0; $i<$nrOfStartArrayValues; $i++){
                             $interpolatedValue = $startArrayValues[$i] + (($endArrayValues[$i]-$startArrayValues[$i])*$factor);
                             $interpolatedDateTimeArrayValue[] = $interpolatedValue;
                         }
 
-                        $dateTimeValues[] = $dateTimeClassName::fromArrayValues($interpolatedDateTimeArrayValue);
+                        $dateTimeValues->add($dateTimeClassName::fromArrayValues($interpolatedDateTimeArrayValue));
                     }
 
                     break;
@@ -393,52 +394,53 @@ class GeoTools
         return $lineString;
     }
 
+    /*
     protected function updateBoundingBoxDistance(BoundingBox $bb): BoundingBox
     {
-        $dx = \geoPHP::load(sprintf('LINESTRING(%f %f, %f %f)', $bb->xMin(), $bb->yMin(), $bb->xMax(), $bb->yMin(), 'wkt'))->greatCircleLength();
-        $dy = \geoPHP::load(sprintf('LINESTRING(%f %f, %f %f)', $bb->xMin(), $bb->yMin(), $bb->xMin(), $bb->yMax(), 'wkt'))->greatCircleLength();
-
+        $dx = \geoPHP::load(sprintf('LINESTRING(%f %f, %f %f)', $bb->xMin(), $bb->yMin(), $bb->xMax(), $bb->yMin()), 'wkt')->greatCircleLength();
+        $dy = \geoPHP::load(sprintf('LINESTRING(%f %f, %f %f)', $bb->xMin(), $bb->yMin(), $bb->xMin(), $bb->yMax()), 'wkt')->greatCircleLength();
         return BoundingBox::fromCoordinates($bb->xMin(), $bb->xMax(), $bb->yMin(), $bb->yMax(), $bb->srid(), $dx, $dy);
     }
+    */
 
     protected function getGridCellFromPoint(BoundingBox $bb, GridSize $gz, Point $point)
     {
-
-        // Todo !! Implement with tests
-        // Transform Point to the same Coordinate System as BoundingBox
-        $point = $this->projectPoint($point, Srid::fromInt($bb->srid()));
-
         $dx = ($bb->xMax() - $bb->xMin()) / $gz->nX();
         $dy = ($bb->yMax() - $bb->yMin()) / $gz->nY();
 
-        $x = ceil(($point->getX() - $bb->xMin()) / $dx);
-        $y = $gz->nY() - floor(($point->getY()-$bb->yMin()) / $dy);
+        $x = (int)ceil(($point->getX() - $bb->xMin()) / $dx);
+        $y = (int)($gz->nY() - floor(($point->getY()-$bb->yMin()) / $dy));
 
-        if ($y != 0){$y = $y-1;}
-        if ($x != 0){$x = $x-1;}
+        if ($y !== 0){--$y;}
+        if ($x !== 0){--$x;}
 
         return array(
-            "row" => $y,
-            "col" => $x
+            'row' => $y,
+            'col' => $x
         );
     }
 
+    /** @noinspection MoreThanThreeArgumentsInspection
+     * @param BoundingBox $bb
+     * @param GridSize $gz
+     * @param int $row
+     * @param int $column
+     * @return Point
+     */
     public function getPointFromGridCell(BoundingBox $bb, GridSize $gz, int $row, int $column): Point
     {
-        $srid = $bb->srid();
         $dx = ($bb->xMax() - $bb->xMin()) / $gz->nX();
         $dy = ($bb->yMax() - $bb->yMin()) / $gz->nY();
 
         $x =  $bb->xMin() + ($column+0.5)*$dx;
         $y =  $bb->yMax() - ($row+0.5)*$dy;
 
-        return new Point($x, $y, $srid);
+        return new Point($x, $y);
     }
 
     protected function executeQuery(string $query): array
     {
-        $query = $this->connection
-            ->prepare($query);
+        $query = $this->connection->prepare($query);
         $query->execute();
         return $query->fetch();
     }

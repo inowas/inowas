@@ -14,7 +14,6 @@
 /vendor/
 /web/bundles/
 /composer.phar
-composer.lock
 
 /supervisor/*.conf
 
@@ -25,4 +24,3 @@ composer.lock
 !/var/data/modflow/.gitkeep
 !/var/tmp/.gitkeep
 tests/results
-

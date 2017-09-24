@@ -94,14 +94,19 @@ final class StressPeriod implements \JsonSerializable
         return $this->steady;
     }
 
-    public function jsonSerialize(): array
+    public function toArray(): array
     {
         return array(
-            "totim_start" => $this->totimStart,
-            "perlen" => $this->perlen,
-            "nstp" => $this->nstp,
-            "tsmult" => $this->tsmult,
-            "steady" => $this->steady
+            'totim_start' => $this->totimStart,
+            'perlen' => $this->perlen,
+            'nstp' => $this->nstp,
+            'tsmult' => $this->tsmult,
+            'steady' => $this->steady
         );
+    }
+
+    public function jsonSerialize(): array
+    {
+        return $this->toArray();
     }
 }

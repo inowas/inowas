@@ -48,7 +48,7 @@ class User extends BaseUser
     public function getName(): string
     {
         if (null === $this->name){
-            $this->name = "";
+            $this->name = '';
         }
         return $this->name;
     }

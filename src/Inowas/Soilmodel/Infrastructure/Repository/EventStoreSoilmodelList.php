@@ -7,14 +7,14 @@ namespace Inowas\Soilmodel\Infrastructure\Repository;
 use Inowas\Soilmodel\Model\SoilmodelAggregate;
 use Inowas\Common\Soilmodel\SoilmodelId;
 use Inowas\Soilmodel\Model\SoilmodelList;
-use Prooph\EventStore\Aggregate\AggregateRepository;
+use Prooph\EventSourcing\Aggregate\AggregateRepository;
 
 class EventStoreSoilmodelList extends AggregateRepository implements SoilmodelList
 {
 
-    public function add(SoilmodelAggregate $soilmodelAggregate)
+    public function save(SoilmodelAggregate $soilmodelAggregate)
     {
-        $this->addAggregateRoot($soilmodelAggregate);
+        $this->saveAggregateRoot($soilmodelAggregate);
     }
 
     public function get(SoilmodelId $soilmodelId)

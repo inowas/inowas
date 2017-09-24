@@ -27,6 +27,7 @@ use Inowas\Soilmodel\Model\Event\SoilmodelNameWasChanged;
 use Inowas\Soilmodel\Model\Event\SoilmodelWasCloned;
 use Inowas\Soilmodel\Model\Event\SoilmodelWasCreated;
 use Inowas\Soilmodel\Model\Event\SoilmodelWasDeleted;
+use Prooph\EventSourcing\AggregateChanged;
 use Prooph\EventSourcing\AggregateRoot;
 
 class SoilmodelAggregate extends AggregateRoot
@@ -327,5 +328,23 @@ class SoilmodelAggregate extends AggregateRoot
     protected function aggregateId(): string
     {
         return $this->soilmodelId->toString();
+    }
+
+    protected function apply(AggregateChanged $e): void
+    {
+        $handler = $this->determineEventHandlerMethodFor($e);
+        if (! method_exists($this, $handler)) {
+            throw new \RuntimeException(sprintf(
+                'Missing event handler method %s for aggregate root %s',
+                $handler,
+                get_class($this)
+            ));
+        }
+        $this->{$handler}($e);
+    }
+
+    protected function determineEventHandlerMethodFor(AggregateChanged $e)
+    {
+        return 'when' . implode(array_slice(explode('\\', get_class($e)), -1));
     }
 }

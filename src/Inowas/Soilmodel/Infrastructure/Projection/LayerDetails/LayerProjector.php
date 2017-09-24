@@ -24,8 +24,8 @@ class LayerProjector extends AbstractDoctrineConnectionProjector
     {
         parent::__construct($connection);
 
-        $this->schema = new Schema();
-        $table = $this->schema->createTable(Table::LAYER_DETAILS);
+        $schema = new Schema();
+        $table = $schema->createTable(Table::LAYER_DETAILS);
         $table->addColumn('soilmodel_id', 'string', ['length' => 36]);
         $table->addColumn('layer_id', 'string', ['length' => 36]);
         $table->addColumn('layer_number', 'integer');
@@ -43,6 +43,7 @@ class LayerProjector extends AbstractDoctrineConnectionProjector
         $table->addColumn('vka', 'text', ['notnull' => false]);
         $table->addColumn('ss', 'text', ['notnull' => false]);
         $table->addColumn('sy', 'text', ['notnull' => false]);
+        $this->addSchema($schema);
     }
 
     public function onSoilmodelWasCloned(SoilmodelWasCloned $event): void

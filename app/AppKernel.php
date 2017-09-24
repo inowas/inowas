@@ -25,8 +25,6 @@ class AppKernel extends Kernel
             new JMS\DiExtraBundle\JMSDiExtraBundle($this),
             new Nelmio\ApiDocBundle\NelmioApiDocBundle(),
             new Nelmio\CorsBundle\NelmioCorsBundle(),
-            new Prooph\Bundle\EventStore\ProophEventStoreBundle(),
-            new Prooph\Bundle\ServiceBus\ProophServiceBusBundle(),
             new Inowas\AppBundle\InowasAppBundle(),
             new Inowas\ModflowBundle\InowasModflowBundle()
         ];

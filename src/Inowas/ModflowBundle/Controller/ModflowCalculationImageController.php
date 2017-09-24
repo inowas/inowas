@@ -7,11 +7,13 @@ namespace Inowas\ModflowBundle\Controller;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Request\ParamFetcher;
 use HeatMap\HeatMap;
+use Inowas\Common\Calculation\HeadData;
 use Inowas\Common\Calculation\ResultType;
 use Inowas\Common\Grid\LayerNumber;
-use Inowas\Common\Id\ModflowId;
+use Inowas\Common\Id\CalculationId;
 use Inowas\Common\DateTime\TotalTime;
 use Inowas\ModflowBundle\Exception\InvalidUuidException;
+use Inowas\ModflowBundle\Exception\NotFoundException;
 use Nelmio\ApiDocBundle\Annotation\ApiDoc as ApiDoc;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -37,6 +39,7 @@ class ModflowCalculationImageController extends InowasRestController
      * @param $layer
      * @param $totim
      * @return Response
+     * @throws \Inowas\ModflowBundle\Exception\NotFoundException
      * @throws \UnexpectedValueException
      * @throws \InvalidArgumentException
      * @throws InvalidUuidException
@@ -49,22 +52,21 @@ class ModflowCalculationImageController extends InowasRestController
     public function getCalculationImageHeadResultsByTypeLayerAndTotimAction(ParamFetcher $paramFetcher, string $id, string $type, string $layer, string $totim): Response
     {
 
-        $this->assertUuidIsValid($id);
-        $calculationId = ModflowId::fromString($id);
-
-        /** @var ResultType $resultType */
-        $resultType = ResultType::fromString($type);
-        $layerNumber = LayerNumber::fromInteger((int)$layer);
-
-        /** @var TotalTime $totim */
+        /** @var ResultType $type */
+        $type = ResultType::fromString($type);
+        $layerNumber = LayerNumber::fromInt((int)$layer);
         $totim = TotalTime::fromInt((int)$totim);
 
-        $headData = $this->get('inowas.modflowcalculation.calculation_results_finder')->findHeadValue(
-            $calculationId,
-            $resultType,
+        $headData = $this->get('inowas.modflowmodel.calculation_results_finder')->findHeadData(
+            CalculationId::fromString($id),
+            $type,
             $layerNumber,
             $totim
         );
+
+        if (! $headData instanceof HeadData) {
+            throw NotFoundException::withMessage('HeadData not found.');
+        }
 
         #$spectrum = array('purple', 'red', 'yellow', 'lime', 'aqua', 'blue');
         $spectrum = array('#800080', '#FF0000', '#FFFF00', '#00FF00', '#00FFFF', '#0000FF');
@@ -103,6 +105,7 @@ class ModflowCalculationImageController extends InowasRestController
      * @param $layer
      * @param $totim
      * @return Response
+     * @throws \Inowas\ModflowBundle\Exception\NotFoundException
      * @throws \UnexpectedValueException
      * @throws \InvalidArgumentException
      * @throws InvalidUuidException
@@ -112,26 +115,27 @@ class ModflowCalculationImageController extends InowasRestController
      * @Rest\QueryParam(name="upper", requirements="\d+", default=95, description="Percentile spectrum max")
      * @Rest\QueryParam(name="loper", requirements="\d+", default=5, description="Percentile spectrum min")
      */
-    public function getScenarioAnalysisResultDifferenceImageByModelIdsTypeLayerAndTotimAction(ParamFetcher $paramFetcher, $id, $id2, $type, $layer, $totim): Response
+    public function getCalculationImageHeadResultsDifferenceByTypeLayerAndTotimAction(ParamFetcher $paramFetcher, $id, $id2, $type, $layer, $totim): Response
     {
 
-        $this->assertUuidIsValid($id);
-        $calculationId = ModflowId::fromString($id);
-
-        $this->assertUuidIsValid($id);
-        $calculationId2 = ModflowId::fromString($id2);
+        $calculationId = CalculationId::fromString($id);
+        $calculationId2 = CalculationId::fromString($id2);
 
         $type = ResultType::fromString($type);
-        $layerNumber = LayerNumber::fromInteger((int)$layer);
+        $layerNumber = LayerNumber::fromInt((int)$layer);
         $totim = TotalTime::fromInt((int)$totim);
 
-        $headData = $this->get('inowas.modflowcalculation.calculation_results_finder')->findHeadDifference(
+        $headData = $this->get('inowas.modflowmodel.calculation_results_finder')->findHeadDifference(
             $calculationId,
             $calculationId2,
             $type,
             $layerNumber,
             $totim
         );
+
+        if (! $headData instanceof HeadData) {
+            throw NotFoundException::withMessage('HeadData not found.');
+        }
 
         #$spectrum = array('purple', 'red', 'yellow', 'lime', 'aqua', 'blue');
         $spectrum = array('#800080', '#FF0000', '#FFFF00', '#00FF00', '#00FFFF', '#0000FF');

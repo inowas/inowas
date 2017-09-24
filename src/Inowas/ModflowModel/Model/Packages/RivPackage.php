@@ -126,21 +126,12 @@ class RivPackage implements PackageInterface
         return $this->type;
     }
 
-    public function toArray(): array
+    public function isValid(): bool
     {
-        return array(
-            'ipakcb' => $this->ipakcb->toInteger(),
-            'stress_period_data' => $this->stressPeriodData->toArray(),
-            'options' => $this->options->toValue(),
-            'extension' => $this->extension->toValue(),
-            'unitnumber' => $this->unitnumber->toValue()
-        );
+        return $this->stressPeriodData->hasData();
     }
 
-    /**
-     * @return array
-     */
-    public function jsonSerialize(): array
+    public function toArray(): array
     {
         return array(
             'ipakcb' => $this->ipakcb->toInteger(),
@@ -149,5 +140,21 @@ class RivPackage implements PackageInterface
             'extension' => $this->extension->toValue(),
             'unitnumber' => $this->unitnumber->toValue()
         );
+    }
+
+    public function getEditables(): array
+    {
+        return $this->toArray();
+    }
+
+    public function mergeEditables(array $arr): void
+    {}
+
+    /**
+     * @return array
+     */
+    public function jsonSerialize(): array
+    {
+        return $this->toArray();
     }
 }

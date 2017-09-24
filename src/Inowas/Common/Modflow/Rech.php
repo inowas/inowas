@@ -62,4 +62,13 @@ class Rech
     {
         return $this->value;
     }
+
+    public function to2DArray(): array
+    {
+        if (is_array($this->value) && is_array($this->value[0])) {
+            return $this->value;
+        }
+
+        return null;
+    }
 }

@@ -23,10 +23,10 @@ final class CloneScenarioAnalysisHandler
     public function __invoke(CloneScenarioAnalysis $command)
     {
         /** @var ScenarioAnalysisAggregate $scenarioAnalysis */
-        $scenarioAnalysis = $this->scenarioAnalysisList->get($command->scenarioAnalysisId());
+        $scenarioAnalysis = $this->scenarioAnalysisList->get($command->id());
 
         if (! $scenarioAnalysis) {
-            throw ScenarioAnalysisNotFoundException::withId($command->scenarioAnalysisId());
+            throw ScenarioAnalysisNotFoundException::withId($command->id());
         }
 
         $clonedBaseModelId = ModflowId::generate();
@@ -40,7 +40,7 @@ final class CloneScenarioAnalysisHandler
         }
 
         $scenarioAnalysis = ScenarioAnalysisAggregate::cloneWithIdUserIdAndAggregate(
-            $command->scenarioAnalysisId(),
+            $command->id(),
             ScenarioAnalysisId::generate(),
             $userId,
             $clonedBaseModelId,
@@ -48,6 +48,6 @@ final class CloneScenarioAnalysisHandler
             $scenarioAnalysis
         );
 
-        $this->scenarioAnalysisList->add($scenarioAnalysis);
+        $this->scenarioAnalysisList->save($scenarioAnalysis);
     }
 }

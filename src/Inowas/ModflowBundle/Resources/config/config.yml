@@ -4,22 +4,21 @@ imports:
     - { resource: eventStore/event_store.yml }
     - { resource: serviceBus/service_bus.yml }
 
-    - { resource: calculation/commandHandler.yml }
-    - { resource: calculation/projections.yml }
-    - { resource: calculation/services.yml }
-
     - { resource: geoTools/services.yml }
 
     - { resource: modflowModel/commandHandler.yml }
+    - { resource: modflowModel/eventListener.yml }
+    - { resource: modflowModel/processManager.yml }
     - { resource: modflowModel/projections.yml }
     - { resource: modflowModel/services.yml }
 
     - { resource: scenarioAnalysis/commandHandler.yml }
+    - { resource: scenarioAnalysis/processManager.yml }
     - { resource: scenarioAnalysis/projections.yml }
     - { resource: scenarioAnalysis/services.yml }
 
-    - { resource: soilmodel/commandHandler.yml }
-    - { resource: soilmodel/projections.yml }
+    #- { resource: soilmodel/commandHandler.yml }
+    #- { resource: soilmodel/projections.yml }
     - { resource: soilmodel/services.yml }
 
     - { resource: tool/projections.yml }

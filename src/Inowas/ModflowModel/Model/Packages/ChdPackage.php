@@ -87,24 +87,30 @@ class ChdPackage implements PackageInterface
         return $this->type;
     }
 
-    public function toArray(): array
+    public function isValid(): bool
     {
-        return array(
-            'stress_period_data' => $this->stressPeriodData->toArray(),
-            'extension' => $this->extension->toValue(),
-            'unitnumber' => $this->unitnumber->toValue()
-        );
+        return $this->stressPeriodData->hasData();
     }
 
-    /**
-     * @return array
-     */
-    public function jsonSerialize(): array
+    public function toArray(): array
     {
         return array(
             'stress_period_data' => (object)$this->stressPeriodData->toArray(),
             'extension' => $this->extension->toValue(),
             'unitnumber' => $this->unitnumber->toValue()
         );
+    }
+
+    public function getEditables(): array
+    {
+        return $this->toArray();
+    }
+
+    public function mergeEditables(array $arr): void
+    {}
+
+    public function jsonSerialize(): array
+    {
+        return $this->toArray();
     }
 }

@@ -2,3 +2,16 @@ services:
     inowas.amqp.stream.connection:
         class: PhpAmqpLib\Connection\AMQPStreamConnection
         arguments: ['%rabbit_mq_host%', '%rabbit_mq_port%', '%rabbit_mq_user%', '%rabbit_mq_password%', '%rabbit_mq_vhost%']
+
+    service_container.wrapper:
+        class: Inowas\ModflowBundle\DependencyInjection\Container
+        arguments:
+          - '@service_container'
+
+#    inowas.schema.validator:
+#        class: Inowas\Common\SchemaValidator\SchemaValidatorWrapper
+#        arguments:
+#            - '@inowas.schema.dereferencer'
+
+#    inowas.schema.dereferencer:
+#        factory: 'Inowas\Common\SchemaValidator\DereferencerFactory:create'

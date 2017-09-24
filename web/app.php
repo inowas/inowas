@@ -2,6 +2,8 @@
 
 use Symfony\Component\HttpFoundation\Request;
 
+chdir(dirname(__DIR__));
+
 /**
  * @var Composer\Autoload\ClassLoader
  */

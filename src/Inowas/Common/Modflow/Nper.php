@@ -19,13 +19,13 @@ class Nper
         $this->number = $number;
     }
 
-    public function toInteger(): int
+    public function toInt(): int
     {
         return $this->number;
     }
 
     public function sameAs(Nper $other)
     {
-        return ($other->toInteger() === $this->toInteger());
+        return ($other->toInt() === $this->toInt());
     }
 }

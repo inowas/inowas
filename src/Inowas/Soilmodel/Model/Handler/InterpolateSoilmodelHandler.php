@@ -93,6 +93,7 @@ final class InterpolateSoilmodelHandler
         );
 
         $this->soilmodel->updateGeologicalLayerValues($layer->id(), $layer->layerNumber(), $layerValues);
+        $this->soilmodelList->save($this->soilmodel);
     }
 
     private function interpolateHTop(LayerInterpolationConfiguration $configuration, array $boreLogs, GeologicalLayerNumber $layerNumber): TopElevation

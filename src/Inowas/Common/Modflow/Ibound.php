@@ -32,7 +32,7 @@ class Ibound
     public static function fromActiveCellsAndNumberOfLayers(ActiveCells $activeCells, int $numberOfLayers): Ibound
     {
         $arr = [];
-        foreach ($activeCells->fullArray() as $rowNumber => $row){
+        foreach ($activeCells->to2DArray() as $rowNumber => $row){
             $arr[$rowNumber] = [];
             foreach ($row as $colNumber => $value){
                 if ($value === false){

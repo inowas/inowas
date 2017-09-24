@@ -35,5 +35,6 @@ final class UpdateGeologicalLayerPropertyHandler
         }
 
         $soilmodel->updateGeologicalLayerProperty($command->userId(), $command->layerId(), $command->property());
+        $this->soilmodelList->save($soilmodel);
     }
 }

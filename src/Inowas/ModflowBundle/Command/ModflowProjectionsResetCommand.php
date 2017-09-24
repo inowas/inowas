@@ -6,7 +6,7 @@ namespace Inowas\ModflowBundle\Command;
 
 use Inowas\Common\Id\UserId;
 use Inowas\Common\Projection\ProjectionInterface;
-use Prooph\EventStore\Stream\StreamName;
+use Prooph\EventStore\StreamName;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -30,34 +30,34 @@ class ModflowProjectionsResetCommand extends ContainerAwareCommand
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $projections = [];
-        $projections[] = $this->getContainer()->get('inowas.modflowmodel.model_boundaries_active_cells_projector');
-        $projections[] = $this->getContainer()->get('inowas.modflowmodel.model_boundaries_list_projector');
-        $projections[] = $this->getContainer()->get('inowas.modflowmodel.model_boundaries_values_projector');
-        $projections[] = $this->getContainer()->get('inowas.modflowcalculation.calculation_configuration_projector');
-        $projections[] = $this->getContainer()->get('inowas.modflowcalculation.calculation_list_projector');
-        $projections[] = $this->getContainer()->get('inowas.modflowcalculation.calculation_results_projector');
-        $projections[] = $this->getContainer()->get('inowas.modflowmodel.model_details_projector');
+        $projections[] = $this->getContainer()->get('inowas.modflowmodel.boundary_projector');
+        $projections[] = $this->getContainer()->get('inowas.modflowmodel.calculation_results_projector');
+        $projections[] = $this->getContainer()->get('inowas.modflowmodel.model_projector');
+        $projections[] = $this->getContainer()->get('inowas.modflowmodel.soilmodel_projector');
         $projections[] = $this->getContainer()->get('inowas.tool.tools_projector');
-        $projections[] = $this->getContainer()->get('inowas.scenarioanalysis.scenarioanalysis_list_projector');
         $projections[] = $this->getContainer()->get('inowas.scenarioanalysis.scenario_list_projector');
-        $projections[] = $this->getContainer()->get('inowas.soilmodel.soilmodel_list_projector');
-        $projections[] = $this->getContainer()->get('inowas.soilmodel.layer_values_projector');
+        $projections[] = $this->getContainer()->get('inowas.scenarioanalysis.scenarioanalysis_list_projector');
 
         /** @var ProjectionInterface $projection */
         foreach ($projections as $projection) {
             $projection->reset();
         }
 
-        $eventBus = $this->getContainer()->get('prooph_service_bus.modflow_event_bus');
-        $eventIterator = $this->getContainer()
-            ->get('prooph_event_store.modflow_model_store')
-            ->replay([new StreamName('event_stream')]);
-        $eventIterator->rewind();
+        $eventBus = $this->getContainer()->get('prooph_service_bus.modflow_replay_event_bus');
+        $eventStore = $this->getContainer()->get('prooph_event_store');
 
-        while ($eventIterator->valid()) {
-            $value = $eventIterator->current();
-            $eventBus->dispatch($value);
-            $eventIterator->next();
+        $config = $this->getContainer()->getParameter('prooph_event_store_repositories');
+
+        foreach ($config as $repo) {
+
+            $eventIterator = $eventStore->load(new StreamName($repo['stream_name']));
+            $eventIterator->rewind();
+
+            while ($eventIterator->valid()) {
+                $value = $eventIterator->current();
+                $eventBus->dispatch($value);
+                $eventIterator->next();
+            }
         }
     }
 }

@@ -1,0 +1,6 @@
+services:
+    inowas.modflowmodel.modflow_packages_process_manager:
+        class: Inowas\ModflowModel\Infrastructure\ProcessManager\ModflowPackagesProcessManager
+        arguments:
+          - '@prooph_service_bus.modflow_command_bus'
+          - '@inowas.modflowmodel.modflow_packages_manager'

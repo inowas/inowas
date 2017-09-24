@@ -17,26 +17,28 @@ final class RemoveBoundaryHandler
     private $modelList;
 
     /**
+     * ChangeModflowModelBoundingBoxHandler constructor.
      * @param ModflowModelList $modelList
      */
-    public function __construct(ModflowModelList $modelList)
-    {
+    public function __construct(ModflowModelList $modelList) {
         $this->modelList = $modelList;
     }
 
     public function __invoke(RemoveBoundary $command)
     {
         /** @var ModflowModelAggregate $modflowModel */
-        $modflowModel = $this->modelList->get($command->baseModelId());
+        $modflowModel = $this->modelList->get($command->modflowModelId());
 
         if (!$modflowModel){
-            throw ModflowModelNotFoundException::withModelId($command->baseModelId());
+            throw ModflowModelNotFoundException::withModelId($command->modflowModelId());
         }
 
-        if (! $modflowModel->ownerId()->sameValueAs($command->userId())){
-            throw WriteAccessFailedException::withUserAndOwner($command->userId(), $modflowModel->ownerId());
+        if (! $modflowModel->userId()->sameValueAs($command->userId())){
+            throw WriteAccessFailedException::withUserAndOwner($command->userId(), $modflowModel->userId());
         }
+
 
         $modflowModel->removeBoundary($command->userId(), $command->boundaryId());
+        $this->modelList->save($modflowModel);
     }
 }

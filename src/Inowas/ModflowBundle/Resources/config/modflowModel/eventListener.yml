@@ -1,0 +1,6 @@
+services:
+    inowas.modflowmodel.calculation_was_started_listener:
+        class: Inowas\ModflowModel\Infrastructure\EventListener\CalculationWasStartedListener
+        arguments:
+          - '@inowas.modflowmodel.amqp_flopy_calculation'
+          - '@inowas.modflowmodel.modflow_packages_manager'

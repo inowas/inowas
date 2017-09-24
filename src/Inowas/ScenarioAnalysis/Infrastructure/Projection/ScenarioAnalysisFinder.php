@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace Inowas\ScenarioAnalysis\Infrastructure\Projection;
 
-
 use Doctrine\DBAL\Connection;
 use Inowas\Common\Id\ModflowId;
 use Inowas\Common\Id\UserId;
-use Inowas\Common\Modflow\ModelDescription;
-use Inowas\Common\Modflow\ModelName;
+use Inowas\Common\Modflow\Description;
+use Inowas\Common\Modflow\Name;
+use Inowas\Common\Status\Visibility;
+use Inowas\ScenarioAnalysis\Model\ScenarioAnalysisDescription;
 use Inowas\ScenarioAnalysis\Model\ScenarioAnalysisId;
+use Inowas\ScenarioAnalysis\Model\ScenarioAnalysisName;
 
 class ScenarioAnalysisFinder
 {
@@ -20,6 +22,88 @@ class ScenarioAnalysisFinder
     public function __construct(Connection $connection) {
         $this->connection = $connection;
         $this->connection->setFetchMode(\PDO::FETCH_ASSOC);
+    }
+
+    public function scenarioAnalysisExists(ScenarioAnalysisId $id): bool
+    {
+        $results = $this->connection->fetchAll(
+            sprintf('SELECT scenario_analysis_id FROM %s WHERE scenario_analysis_id = :scenario_analysis_id', Table::SCENARIO_ANALYSIS_LIST),
+            ['scenario_analysis_id' => $id->toString()]
+        );
+
+        return !($results === false);
+    }
+
+    public function scenarioAnalysisContainsScenario(ScenarioAnalysisId $id, ModflowId $scenarioId): bool
+    {
+        $results = $this->connection->fetchAssoc(
+            sprintf('SELECT count(*) FROM %s WHERE scenario_analysis_id = :scenario_analysis_id AND scenario_id = :scenario_id', Table::SCENARIO_LIST),
+            ['scenario_analysis_id' => $id->toString(), 'scenario_id' => $scenarioId->toString()]
+        );
+
+        return $results['count'] > 0;
+    }
+
+    public function getScenarioAnalysisName(ScenarioAnalysisId $id): ?ScenarioAnalysisName
+    {
+        $result = $this->connection->fetchAssoc(
+            sprintf('SELECT name FROM %s WHERE scenario_analysis_id = :scenario_analysis_id', Table::SCENARIO_ANALYSIS_LIST),
+            ['scenario_analysis_id' => $id->toString()]
+        );
+
+        if ($result === false) {
+            return null;
+        }
+
+        return ScenarioAnalysisName::fromString($result['name']);
+    }
+
+    public function getScenarioAnalysisDescription(ScenarioAnalysisId $id): ?ScenarioAnalysisDescription
+    {
+        $result = $this->connection->fetchAssoc(
+            sprintf('SELECT description FROM %s WHERE scenario_analysis_id = :scenario_analysis_id', Table::SCENARIO_ANALYSIS_LIST),
+            ['scenario_analysis_id' => $id->toString()]
+        );
+
+        if ($result === false) {
+            return null;
+        }
+
+        return ScenarioAnalysisDescription::fromString($result['description']);
+    }
+
+    public function getScenarioAnalysisVisibility(ScenarioAnalysisId $id): ?Visibility
+    {
+        $result = $this->connection->fetchAssoc(
+            sprintf('SELECT public FROM %s WHERE scenario_analysis_id = :scenario_analysis_id', Table::SCENARIO_ANALYSIS_LIST),
+            ['scenario_analysis_id' => $id->toString()]
+        );
+
+        if ($result === false) {
+            return null;
+        }
+
+        return $result['public'] === 1 ? Visibility::public() : Visibility::private();
+    }
+
+    public function isBasemodel(ModflowId $modelId): bool
+    {
+        $results = $this->connection->fetchAssoc(
+            sprintf('SELECT count(*) FROM %s WHERE scenario_id = :model_id AND is_base_model', Table::SCENARIO_LIST),
+            ['model_id' => $modelId->toString()]
+        );
+
+        return $results['count'] > 0;
+    }
+
+    public function isScenario(ModflowId $modelId): bool
+    {
+        $results = $this->connection->fetchAssoc(
+            sprintf('SELECT count(*) FROM %s WHERE scenario_id = :model_id AND is_scenario', Table::SCENARIO_LIST),
+            ['model_id' => $modelId->toString()]
+        );
+
+        return $results['count'] > 0;
     }
 
     public function findScenarioAnalysesByUserId(UserId $userId): array
@@ -39,7 +123,7 @@ class ScenarioAnalysisFinder
     public function findPublicScenarioAnalyses(): array
     {
         $results = $this->connection->fetchAll(
-            sprintf('SELECT scenario_analysis_id as id, user_id, user_name, base_model_id, name, description, created_at, public FROM %s WHERE public = true', Table::SCENARIO_ANALYSIS_LIST)
+            sprintf('SELECT scenario_analysis_id as id, user_id, user_name, base_model_id, name, description, created_at, public FROM %s WHERE public = 1', Table::SCENARIO_ANALYSIS_LIST)
         );
 
         if ($results === false) {
@@ -47,6 +131,20 @@ class ScenarioAnalysisFinder
         }
 
         return $results;
+    }
+
+    public function isPublic(ScenarioAnalysisId $scenarioAnalysisId): bool
+    {
+        $result = $this->connection->fetchAssoc(
+            sprintf('SELECT count(*) FROM %s WHERE scenario_analysis_id = :scenario_analysis_id AND public = 1', Table::SCENARIO_ANALYSIS_LIST),
+            ['scenario_analysis_id' => $scenarioAnalysisId->toString()]
+        );
+
+        if ($result === false) {
+            return false;
+        }
+
+        return $result['count'] === 1;
     }
 
     public function findScenarioAnalysisDetailsById(ScenarioAnalysisId $scenarioAnalysisId): ?array
@@ -63,6 +161,7 @@ class ScenarioAnalysisFinder
         $result['geometry'] = json_decode($result['geometry'], true);
         $result['grid_size'] = json_decode($result['grid_size'], true);
         $result['bounding_box'] = json_decode($result['bounding_box'], true);
+        $result['public'] = (bool) $result['public'];
 
         $baseModel = $this->connection->fetchAssoc(
             sprintf('SELECT scenario_id as id, name, description, calculation_id FROM %s WHERE scenario_analysis_id = :scenario_analysis_id AND is_base_model = true', Table::SCENARIO_LIST),
@@ -89,7 +188,7 @@ class ScenarioAnalysisFinder
         return $result;
     }
 
-    public function getScenarioNameById(ModflowId $modflowId): ?ModelName
+    public function getScenarioNameById(ModflowId $modflowId): ?Name
     {
         $result = $this->connection->fetchAssoc(
             sprintf('SELECT name FROM %s WHERE scenario_id = :scenario_id', Table::SCENARIO_LIST),
@@ -101,10 +200,10 @@ class ScenarioAnalysisFinder
             return null;
         }
 
-        return ModelName::fromString($result['name']);
+        return Name::fromString($result['name']);
     }
 
-    public function getScenarioDescriptionById(ModflowId $modflowId): ?ModelDescription
+    public function getScenarioDescriptionById(ModflowId $modflowId): ?Description
     {
         $result = $this->connection->fetchAssoc(
             sprintf('SELECT description FROM %s WHERE scenario_id = :scenario_id', Table::SCENARIO_LIST),
@@ -116,7 +215,7 @@ class ScenarioAnalysisFinder
             return null;
         }
 
-        return ModelDescription::fromString($result['description']);
+        return Description::fromString($result['description']);
     }
 
     public function findAll(): array

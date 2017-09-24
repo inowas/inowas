@@ -1,0 +1,31 @@
+{
+    "uuid": "ce849e4c-dfc8-4ab2-a37a-69f37088e771",
+    "message_name": "createModflowModel",
+    "metadata": {},
+    "payload": {
+        "id": "f3f6788a-61a6-410e-a14d-af7ecca6babb",
+        "name": "NewModflowModel",
+        "description": "NewModflowModelDescription",
+        "geometry": {
+            "type": "Polygon",
+            "coordinates": [[
+                [-63.687336, -31.313615],
+                [-63.687336, -31.367449],
+                [-63.569260, -31.367449],
+                [-63.569260, -31.313615],
+                [-63.687336, -31.313615]
+            ]]
+        },
+        "bounding_box": [
+            [-63.687336, -31.367449],
+            [-63.569260, -31.313615]
+        ],
+        "grid_size": {
+            "n_x": 50,
+            "n_y": 60
+        },
+        "time_unit": 3,
+        "length_unit": 3,
+        "public": true
+    }
+}

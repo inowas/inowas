@@ -48,5 +48,6 @@ final class RemoveBoreLogFromSoilmodelHandler
         }
 
         $soilmodel->removeBoreLog($command->userId(), $command->boreLogId());
+        $this->boreLogList->save($boreLog);
     }
 }

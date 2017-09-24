@@ -1,0 +1,23 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "https://inowas.com/schema/",
+    "oneOf" : [
+        {
+            "type": "float",
+            "description": "One value for all in the layer"
+        },
+        {
+            "type": "array",
+            "description": "Set every cell in a 2D-Array",
+            "items": {
+                "type": "array",
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "type": "float"
+                    }
+                }
+            }
+        }
+    ]
+}

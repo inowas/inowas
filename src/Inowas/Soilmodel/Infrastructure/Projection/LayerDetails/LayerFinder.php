@@ -39,7 +39,7 @@ class LayerFinder
         $layTypArr = [];
         /** @var LayerNumber $layer */
         foreach ($layers as $layer) {
-            $result = $this->getValue($soilmodelId, $type, $layer->toInteger());
+            $result = $this->getValue($soilmodelId, $type, $layer->toInt());
             if (is_array($result) && array_key_exists($type, $result)){
                 $layTypArr[] = json_decode($result[$type]);
             }
@@ -55,7 +55,7 @@ class LayerFinder
         $layAvgArr = [];
         /** @var LayerNumber $layer */
         foreach ($layers as $layer) {
-            $result = $this->getValue($soilmodelId, $type, $layer->toInteger());
+            $result = $this->getValue($soilmodelId, $type, $layer->toInt());
             if (is_array($result) && array_key_exists($type, $result)){
                 $layAvgArr[] = json_decode($result[$type]);
             }
@@ -71,7 +71,7 @@ class LayerFinder
         $arr = [];
         /** @var LayerNumber $layer */
         foreach ($layers as $layer) {
-            $result = $this->getValue($soilmodelId, $type, $layer->toInteger());
+            $result = $this->getValue($soilmodelId, $type, $layer->toInt());
             if (is_array($result) && array_key_exists($type, $result)){
                 $arr[] = json_decode($result[$type]);
             }
@@ -87,7 +87,7 @@ class LayerFinder
         $arr = [];
         /** @var LayerNumber $layer */
         foreach ($layers as $layer) {
-            $result = $this->getValue($soilmodelId, $type, $layer->toInteger());
+            $result = $this->getValue($soilmodelId, $type, $layer->toInt());
             if (is_array($result) && array_key_exists($type, $result)){
                 $arr[] = json_decode($result[$type]);
             }
@@ -103,7 +103,7 @@ class LayerFinder
         $arr = [];
         /** @var LayerNumber $layer */
         foreach ($layers as $layer) {
-            $result = $this->getValue($soilmodelId, $type, $layer->toInteger());
+            $result = $this->getValue($soilmodelId, $type, $layer->toInt());
             if (is_array($result) && array_key_exists($type, $result)){
                 $arr[] = json_decode($result[$type]);
             }
@@ -134,7 +134,7 @@ class LayerFinder
         $botmArr = [];
         /** @var LayerNumber $layer */
         foreach ($layers as $layer) {
-            $result = $this->getValue($soilmodelId, $type, $layer->toInteger());
+            $result = $this->getValue($soilmodelId, $type, $layer->toInt());
             if (is_array($result) && array_key_exists($type, $result)){
                 $botmArr[] = json_decode($result[$type]);
             }
@@ -151,7 +151,7 @@ class LayerFinder
         $hk = [];
         /** @var LayerNumber $layer */
         foreach ($layers as $layer) {
-            $result = $this->getValue($soilmodelId, $type, $layer->toInteger());
+            $result = $this->getValue($soilmodelId, $type, $layer->toInt());
             if (is_array($result) && array_key_exists($type, $result)){
                 $hk[] = json_decode($result[$type]);
             }
@@ -167,7 +167,7 @@ class LayerFinder
         $arr = [];
         /** @var LayerNumber $layer */
         foreach ($layers as $layer) {
-            $result = $this->getValue($soilmodelId, $type, $layer->toInteger());
+            $result = $this->getValue($soilmodelId, $type, $layer->toInt());
             if (is_array($result) && array_key_exists($type, $result)){
                 $arr[] = json_decode($result[$type]);
             }
@@ -183,7 +183,7 @@ class LayerFinder
         $arr = [];
         /** @var LayerNumber $layer */
         foreach ($layers as $layer) {
-            $result = $this->getValue($soilmodelId, $type, $layer->toInteger());
+            $result = $this->getValue($soilmodelId, $type, $layer->toInt());
             if (is_array($result) && array_key_exists($type, $result)){
                 $arr[] = json_decode($result[$type]);
             }
@@ -200,7 +200,7 @@ class LayerFinder
         $ss = [];
         /** @var LayerNumber $layer */
         foreach ($layers as $layer) {
-            $result = $this->getValue($soilmodelId, $type, $layer->toInteger());
+            $result = $this->getValue($soilmodelId, $type, $layer->toInt());
             if (is_array($result) && array_key_exists($type, $result)){
                 $ss[] = json_decode($result[$type]);
             }
@@ -217,7 +217,7 @@ class LayerFinder
         $sy = [];
         /** @var LayerNumber $layer */
         foreach ($layers as $layer) {
-            $result = $this->getValue($soilmodelId, $type, $layer->toInteger());
+            $result = $this->getValue($soilmodelId, $type, $layer->toInt());
             if (is_array($result) && array_key_exists($type, $result)){
                 $sy[] = json_decode($result[$type]);
             }
@@ -229,7 +229,7 @@ class LayerFinder
     public function getNlay(SoilmodelId $soilmodelId): Nlay
     {
         $layers = $this->getSortedLayerNumbers($soilmodelId);
-        return Nlay::fromInteger(count($layers));
+        return Nlay::fromInt(count($layers));
     }
 
     public function getValues(SoilmodelId $soilmodelId, AbstractSoilproperty $prop): ?AbstractSoilproperty

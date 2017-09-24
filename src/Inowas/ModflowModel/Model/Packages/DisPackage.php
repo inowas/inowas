@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Inowas\ModflowModel\Model\Packages;
 
 use Inowas\Common\DateTime\DateTime;
+use Inowas\Common\Grid\Distance;
 use Inowas\Common\Grid\Nlay;
 use Inowas\Common\Modflow\Botm;
 use Inowas\Common\Grid\BoundingBox;
@@ -13,7 +14,6 @@ use Inowas\Common\Grid\Delc;
 use Inowas\Common\Grid\Delr;
 use Inowas\Common\Grid\GridSize;
 use Inowas\Common\Grid\Laycbd;
-use Inowas\Common\Grid\LayerNumber;
 use Inowas\Common\Grid\Proj4str;
 use Inowas\Common\Grid\Rotation;
 use Inowas\Common\Grid\Nrow;
@@ -105,7 +105,7 @@ class DisPackage implements PackageInterface
     public static function fromDefaults(): DisPackage
     {
         // DEFAULT
-        $nlay = LayerNumber::fromInteger(1);
+        $nlay = Nlay::fromInt(1);
         $ncol = Ncol::fromInt(1);
         $nrow = Nrow::fromInt(1);
         $nper = Nper::fromInteger(1);
@@ -156,7 +156,7 @@ class DisPackage implements PackageInterface
 
 
     /** @noinspection MoreThanThreeArgumentsInspection
-     * @param LayerNumber $nlay
+     * @param Nlay $nlay
      * @param Nrow $nrow
      * @param Ncol $ncol
      * @param Nper $nper
@@ -181,7 +181,7 @@ class DisPackage implements PackageInterface
      * @return DisPackage
      */
     public static function fromParams(
-        LayerNumber $nlay,
+        Nlay $nlay,
         Nrow $nrow,
         Ncol $ncol,
         Nper $nper,
@@ -233,7 +233,7 @@ class DisPackage implements PackageInterface
 
     public static function fromArray(array $arr): DisPackage
     {
-        $nlay = LayerNumber::fromInteger($arr['nlay']);
+        $nlay = Nlay::fromInt($arr['nlay']);
         $nrow = Nrow::fromInt($arr['nrow']);
         $ncol = Ncol::fromInt($arr['ncol']);
         $nper = Nper::fromInteger($arr['nper']);
@@ -436,13 +436,13 @@ class DisPackage implements PackageInterface
         return $package;
     }
 
-    public function updateGridParameters(GridSize $gridSize, BoundingBox $boundingBox): DisPackage
+    public function updateGridParameters(GridSize $gridSize, BoundingBox $boundingBox, Distance $dx, Distance $dy): DisPackage
     {
         $package = self::fromArray($this->toArray());
         $package->nrow = Nrow::fromInt($gridSize->nY());
         $package->ncol = Ncol::fromInt($gridSize->nX());
-        $package->delr = Delr::fromValue($boundingBox->dY()/$gridSize->nY());
-        $package->delc = Delc::fromValue($boundingBox->dX()/$gridSize->nX());
+        $package->delr = Delr::fromValue($dy->toFloat()/$gridSize->nY());
+        $package->delc = Delc::fromValue($dx->toFloat()/$gridSize->nX());
         $package->xul = Xul::fromValue($boundingBox->xMin());
         $package->yul = Yul::fromValue($boundingBox->yMax());
         return $package;
@@ -493,13 +493,18 @@ class DisPackage implements PackageInterface
         return $this->lenuni;
     }
 
+    public function isValid(): bool
+    {
+        return true;
+    }
+
     public function toArray(): array
     {
         return array(
-            'nlay' => $this->nlay->toInteger(),
-            'nrow' => $this->nrow->toInteger(),
-            'ncol' => $this->ncol->toInteger(),
-            'nper' => $this->nper->toInteger(),
+            'nlay' => $this->nlay->toInt(),
+            'nrow' => $this->nrow->toInt(),
+            'ncol' => $this->ncol->toInt(),
+            'nper' => $this->nper->toInt(),
             'delr' => $this->delr->toValue(),
             'delc' => $this->delc->toValue(),
             'laycbd' => $this->laycbd->toValue(),
@@ -520,6 +525,14 @@ class DisPackage implements PackageInterface
             'start_datetime' => $this->startDateTime->toAtom()
         );
     }
+
+    public function getEditables(): array
+    {
+        return $this->toArray();
+    }
+
+    public function mergeEditables(array $arr): void
+    {}
 
     /**
      * @return array

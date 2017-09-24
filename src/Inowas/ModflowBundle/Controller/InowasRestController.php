@@ -48,7 +48,7 @@ class InowasRestController extends FOSRestController
     {
         if (! array_key_exists($key, $content)){
             throw InvalidArgumentException::withMessage(sprintf(
-                'Expected key \'%s\' not found in submitted data. Submitted keys are: %s.', $key, implode(", ", array_keys($content))
+                'Expected key \'%s\' not found in submitted data. Submitted keys are: %s.', $key, implode(', ', array_keys($content))
             ));
         }
     }

@@ -29,5 +29,6 @@ final class DeleteSoilmodelHandler
         }
 
         $soilmodel->delete($command->userId());
+        $this->soilmodelList->save($soilmodel);
     }
 }

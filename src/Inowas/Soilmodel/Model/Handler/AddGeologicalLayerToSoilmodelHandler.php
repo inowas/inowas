@@ -37,5 +37,6 @@ final class AddGeologicalLayerToSoilmodelHandler
 
         $soilmodel->addGeologicalLayer($command->userId(), $command->layer());
         $soilmodel->updateGeologicalLayerValues($command->layer()->id(), $command->layer()->layerNumber(), GeologicalLayerValues::fromDefault());
+        $this->soilmodelList->save($soilmodel);
     }
 }

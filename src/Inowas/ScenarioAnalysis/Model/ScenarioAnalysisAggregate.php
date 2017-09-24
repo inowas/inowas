@@ -6,15 +6,16 @@ namespace Inowas\ScenarioAnalysis\Model;
 
 use Inowas\Common\Id\ModflowId;
 use Inowas\Common\Id\UserId;
-use Inowas\Common\Modflow\ModelDescription;
-use Inowas\Common\Modflow\ModelName;
+use Inowas\Common\Status\Visibility;
 use Inowas\ScenarioAnalysis\Model\Event\ScenarioAnalysisDescriptionWasChanged;
 use Inowas\ScenarioAnalysis\Model\Event\ScenarioAnalysisNameWasChanged;
+use Inowas\ScenarioAnalysis\Model\Event\ScenarioAnalysisVisibilityWasChanged;
 use Inowas\ScenarioAnalysis\Model\Event\ScenarioAnalysisWasCloned;
 use Inowas\ScenarioAnalysis\Model\Event\ScenarioAnalysisWasCreated;
 use Inowas\ScenarioAnalysis\Model\Event\ScenarioAnalysisWasDeleted;
 use Inowas\ScenarioAnalysis\Model\Event\ScenarioWasCreated;
 use Inowas\ScenarioAnalysis\Model\Event\ScenarioWasDeleted;
+use Prooph\EventSourcing\AggregateChanged;
 use Prooph\EventSourcing\AggregateRoot;
 
 class ScenarioAnalysisAggregate extends AggregateRoot
@@ -104,17 +105,15 @@ class ScenarioAnalysisAggregate extends AggregateRoot
      * @param UserId $userId
      * @param ModflowId $scenarioId
      * @param ModflowId $baseModelId
-     * @param ModelName $name
-     * @param ModelDescription $description
      */
-    public function createScenario(UserId $userId, ModflowId $scenarioId, ModflowId $baseModelId, ModelName $name, ModelDescription $description): void
+    public function createScenario(UserId $userId, ModflowId $scenarioId, ModflowId $baseModelId): void
     {
         if (in_array($scenarioId->toString(), $this->scenarios, true)){
             return;
         }
 
         $this->scenarios[] = $scenarioId->toString();
-        $this->recordThat(ScenarioWasCreated::from($this->id, $userId, $scenarioId, $baseModelId, $name, $description));
+        $this->recordThat(ScenarioWasCreated::from($this->id, $userId, $scenarioId, $baseModelId));
     }
 
     public function deleteScenario(UserId $userId, ModflowId $scenarioId): void
@@ -137,6 +136,11 @@ class ScenarioAnalysisAggregate extends AggregateRoot
     {
         $this->description = $description;
         $this->recordThat(ScenarioAnalysisDescriptionWasChanged::of($this->id, $userId, $description));
+    }
+
+    public function changeVisibility(UserId $userId, Visibility $visibility): void
+    {
+        $this->recordThat(ScenarioAnalysisVisibilityWasChanged::of($this->id, $userId, $visibility));
     }
 
     public function scenarioAnalysisId(): ScenarioAnalysisId
@@ -217,8 +221,29 @@ class ScenarioAnalysisAggregate extends AggregateRoot
         $this->description = $event->description();
     }
 
+    protected function whenScenarioAnalysisVisibilityWasChanged(ScenarioAnalysisVisibilityWasChanged $event): void
+    {}
+
     protected function aggregateId(): string
     {
         return $this->id->toString();
+    }
+
+    protected function apply(AggregateChanged $e): void
+    {
+        $handler = $this->determineEventHandlerMethodFor($e);
+        if (! method_exists($this, $handler)) {
+            throw new \RuntimeException(sprintf(
+                'Missing event handler method %s for aggregate root %s',
+                $handler,
+                get_class($this)
+            ));
+        }
+        $this->{$handler}($e);
+    }
+
+    protected function determineEventHandlerMethodFor(AggregateChanged $e)
+    {
+        return 'when' . implode(array_slice(explode('\\', get_class($e)), -1));
     }
 }

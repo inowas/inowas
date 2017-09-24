@@ -16,4 +16,3 @@ services:
         arguments:
             - '@doctrine.dbal.default_connection'
             - '@inowas.modflowmodel.model_finder'
-            - '@inowas.modflowcalculation.calculation_list_finder'

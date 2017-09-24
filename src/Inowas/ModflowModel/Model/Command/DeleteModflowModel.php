@@ -4,32 +4,33 @@ declare(strict_types=1);
 
 namespace Inowas\ModflowModel\Model\Command;
 
+use Inowas\Common\Command\AbstractJsonSchemaCommand;
 use Inowas\Common\Id\ModflowId;
 use Inowas\Common\Id\UserId;
-use Prooph\Common\Messaging\Command;
-use Prooph\Common\Messaging\PayloadConstructable;
-use Prooph\Common\Messaging\PayloadTrait;
 
-class DeleteModflowModel extends Command implements PayloadConstructable
+class DeleteModflowModel extends AbstractJsonSchemaCommand
 {
-
-    use PayloadTrait;
-
     public static function byIdAndUser(ModflowId $modelId, UserId $userId): DeleteModflowModel
     {
-        return new self([
-            'user_id' => $userId->toString(),
-            'modflowmodel_id' => $modelId->toString()
-        ]);
+        $self = new static(['id' => $modelId->toString()]);
+
+        /** @var DeleteModflowModel $self */
+        $self = $self->withAddedMetadata('user_id', $userId->toString());
+        return $self;
+    }
+
+    public function schema(): string
+    {
+        return 'file://spec/schema/modflow/modflowModelId.json';
     }
 
     public function userId(): UserId
     {
-        return UserId::fromString($this->payload['user_id']);
+        return UserId::fromString($this->metadata['user_id']);
     }
 
     public function modelId(): ModflowId
     {
-        return ModflowId::fromString($this->payload['modflowmodel_id']);
+        return ModflowId::fromString($this->payload['id']);
     }
 }

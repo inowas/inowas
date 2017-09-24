@@ -331,6 +331,11 @@ class UpwPackage implements PackageInterface
         $this->unitnumber = $unitNumber;
     }
 
+    public function isValid(): bool
+    {
+        return true;
+    }
+
     public function toArray(): array
     {
         return array(
@@ -351,6 +356,22 @@ class UpwPackage implements PackageInterface
             'extension' => $this->extension->toValue(),
             'unitnumber' => $this->unitnumber->toValue()
         );
+    }
+
+    public function getEditables(): array
+    {
+        return array(
+            'hdry' => $this->hdry->toValue(),
+            'iphdry' => $this->iphdry->toValue(),
+            'vkcb' => $this->vkcb->toValue()
+        );
+    }
+
+    public function mergeEditables(array $arr): void
+    {
+        $this->hdry = Hdry::fromValue($arr['hdry']);
+        $this->iphdry = Iphdry::fromValue($arr['iphdry']);
+        $this->vkcb = Vkcb::fromValue($arr['vkcb']);
     }
 
     /**

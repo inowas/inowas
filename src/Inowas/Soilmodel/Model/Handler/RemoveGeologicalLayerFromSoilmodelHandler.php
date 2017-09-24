@@ -35,5 +35,7 @@ final class RemoveGeologicalLayerFromSoilmodelHandler
         }
 
         $soilmodel->removeGeologicalLayer($command->userId(), $command->layer());
+        $this->soilmodelList->save($soilmodel);
+
     }
 }

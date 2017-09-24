@@ -6,12 +6,9 @@ namespace Inowas\ModflowBundle\Controller;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 use Inowas\Common\Id\ModflowId;
-use Inowas\Common\Modflow\ModelDescription;
-use Inowas\Common\Modflow\ModelName;
 use Inowas\ModflowBundle\Exception\InvalidArgumentException;
 use Inowas\ModflowBundle\Exception\InvalidUuidException;
 use Inowas\ModflowBundle\Exception\NotFoundException;
-use Inowas\ScenarioAnalysis\Model\Command\CloneScenario;
 use Inowas\ScenarioAnalysis\Model\Command\CloneScenarioAnalysis;
 use Inowas\ScenarioAnalysis\Model\Command\CreateScenario;
 use Inowas\ScenarioAnalysis\Model\Command\DeleteScenario;
@@ -93,6 +90,15 @@ class ScenarioAnalysisController extends InowasRestController
             throw NotFoundException::withMessage(sprintf('ScenarioAnalysis with id %s was not found.', $scenarioAnalysisId->toString()));
         }
 
+        $userId = $this->getUserId();
+        $permissions = $this->get('inowas.user_permissions')->getModelPermissions($userId, ModflowId::fromString($scenarioAnalysis['base_model']['id']))->toString();
+
+        if (!empty($scenarioAnalysis['base_model'])) {
+            $scenarioAnalysis['base_model']['permissions'] = $permissions;
+        }
+
+        $scenarioAnalysis['permissions'] = $permissions;
+
         return new JsonResponse($scenarioAnalysis);
     }
 
@@ -120,7 +126,9 @@ class ScenarioAnalysisController extends InowasRestController
         $userId = $this->getUserId();
         $this->assertUuidIsValid($id);
         $scenarioAnalysisId = ScenarioAnalysisId::fromString($id);
-        $this->get('prooph_service_bus.modflow_command_bus')->dispatch(CloneScenarioAnalysis::byUserWithId($userId, $scenarioAnalysisId));
+        $newScenarioAnalysisId = ScenarioAnalysisId::generate();
+
+        $this->get('prooph_service_bus.modflow_command_bus')->dispatch(CloneScenarioAnalysis::byUserWithIds($userId, $scenarioAnalysisId, $newScenarioAnalysisId));
 
         return new RedirectResponse(
             $this->generateUrl('get_my_tools'),
@@ -157,12 +165,11 @@ class ScenarioAnalysisController extends InowasRestController
         $newScenarioId = ModflowId::generate();
 
         $this->get('prooph_service_bus.modflow_command_bus')->dispatch(
-            CreateScenario::byUserWithBaseModelAndScenarioIdAndPrefix(
+            CreateScenario::byUserWithIds(
                 $scenarioAnalysisId,
                 $userId,
                 $baseScenarioId,
-                $newScenarioId,
-                'Copy of '
+                $newScenarioId
             )
         );
 

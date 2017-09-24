@@ -4,45 +4,46 @@ declare(strict_types=1);
 
 namespace Inowas\ModflowModel\Model\Command;
 
+use Inowas\Common\Boundaries\BoundaryFactory;
 use Inowas\Common\Boundaries\ModflowBoundary;
+use Inowas\Common\Command\AbstractJsonSchemaCommand;
 use Inowas\Common\Id\ModflowId;
 use Inowas\Common\Id\UserId;
-use Prooph\Common\Messaging\Command;
-use Prooph\Common\Messaging\PayloadConstructable;
-use Prooph\Common\Messaging\PayloadTrait;
 
-class AddBoundary extends Command implements PayloadConstructable
+class AddBoundary extends AbstractJsonSchemaCommand
 {
 
-    use PayloadTrait;
-
-    public static function to(
-        ModflowId $modelId,
-        UserId $userId,
-        ModflowBoundary $boundary
-    ): AddBoundary
+    public static function forModflowModel(UserId $userId, ModflowId $modelId, ModflowBoundary $boundary): AddBoundary
     {
-        $payload = [
-            'model_id' => $modelId->toString(),
-            'user_id' => $userId->toString(),
-            'boundary' => serialize($boundary)
-        ];
+        $self = new static(
+            [
+                'id' => $modelId->toString(),
+                'boundary' => $boundary->toArray()
+            ]
+        );
 
-        return new self($payload);
+        /** @var AddBoundary $self */
+        $self = $self->withAddedMetadata('user_id', $userId->toString());
+        return $self;
     }
 
-    public function boundary(): ModflowBoundary
+    public function schema(): string
     {
-        return unserialize($this->payload['boundary']);
+        return 'file://spec/schema/modflow/command/addBoundaryPayload.json';
     }
 
-    public function modelId(): ModflowId
+    public function modflowModelId(): ModflowId
     {
-        return ModflowId::fromString($this->payload['model_id']);
+        return ModflowId::fromString($this->payload['id']);
     }
 
     public function userId(): UserId
     {
-        return UserId::fromString($this->payload['user_id']);
+        return UserId::fromString($this->metadata['user_id']);
+    }
+
+    public function boundary(): ModflowBoundary
+    {
+        return BoundaryFactory::createFromArray($this->payload['boundary']);
     }
 }

@@ -1,0 +1,10 @@
+{
+    "uuid": "ecc23a8e-d6e6-4a24-af4e-c6bec5a5cc73",
+    "message_name": "calculateStressPeriods",
+    "metadata": {},
+    "payload": {
+        "id": "f3f6788a-61a6-410e-a14d-af7ecca6babb",
+        "start": "2015-01-01T00:00:00+00:00",
+        "end": "2015-12-31T00:00:00+00:00"
+    }
+}

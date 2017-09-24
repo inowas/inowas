@@ -21,3 +21,8 @@ parameters:
     rabbit_mq_user: 'user'
     rabbit_mq_password: 'password'
     rabbit_mq_vhost: 'vhost'
+
+    rabbit_mq_calculation_queue: 'flopy_calculation_queue'
+    rabbit_mq_calculation_finished_queue: 'flopy_calculation_finished_queue'
+    rabbit_mq_read_data_queue: 'rpc_flopy_read_data_queue'
+    rabbit_mq_interpolation_queue: 'rpc_interpolation_queue'

@@ -584,6 +584,11 @@ class NwtPackage implements PackageInterface
         return $package;
     }
 
+    public function isValid(): bool
+    {
+        return true;
+    }
+
     public function toArray(): array
     {
         return array(
@@ -622,6 +627,80 @@ class NwtPackage implements PackageInterface
             'extension' => $this->extension->toString(),
             'unitnumber' => $this->unitnumber->toInteger(),
         );
+    }
+
+    public function getEditables(): array
+    {
+        return array(
+            'headtol' => $this->headtol->toFloat(),
+            'fluxtol' => $this->fluxtol->toFloat(),
+            'maxiterout' => $this->maxiterout->toInteger(),
+            'thickfact' => $this->thickfact->toFloat(),
+            'linmeth' => $this->linmeth->toInteger(),
+            'iprnwt' => $this->iprnwt->toInteger(),
+            'ibotavg' => $this->ibotavg->toInteger(),
+            'options' => $this->options->toString(),
+            'continue' => $this->continue->toBool(),
+            'dbdtheta' => $this->dbdtheta->toFloat(),
+            'dbdkappa' => $this->dbdkappa->toFloat(),
+            'dbdgamma' => $this->dbdgamma->toFloat(),
+            'momfact' => $this->momfact->toFloat(),
+            'backflag' => $this->backflag->toInteger(),
+            'maxbackiter' => $this->maxbackiter->toInteger(),
+            'backtol' => $this->backtol->toFloat(),
+            'backreduce' => $this->backreduce->toFloat(),
+            'maxitinner' => $this->maxitinner->toInteger(),
+            'ilumethod' => $this->ilumethod->toInteger(),
+            'levfill' => $this->levfill->toInteger(),
+            'stoptol' => $this->stoptol->toFloat(),
+            'msdr' => $this->msdr->toInteger(),
+            'iacl' => $this->iacl->toInteger(),
+            'norder' => $this->norder->toInteger(),
+            'level' => $this->level->toInteger(),
+            'north' => $this->north->toInteger(),
+            'iredsys' => $this->iredsys->toInteger(),
+            'rrctols' => $this->rrctols->toFloat(),
+            'idroptol' => $this->idroptol->toInteger(),
+            'epsrn' => $this->epsrn->toFloat(),
+            'hclosexmd' => $this->hclosexmd->toFloat(),
+            'mxiterxmd' => $this->mxiterxmd->toInteger()
+        );
+    }
+
+    public function mergeEditables(array $arr): void
+    {
+        $this->headtol = Headtol::fromFloat($arr['headtol']);
+        $this->fluxtol = Fluxtol::fromFloat($arr['fluxtol']);
+        $this->maxiterout = Maxiterout::fromInteger($arr['maxiterout']);
+        $this->thickfact = Thickfact::fromFloat($arr['thickfact']);
+        $this->linmeth = Linmeth::fromInteger($arr['linmeth']);
+        $this->iprnwt = Iprnwt::fromInteger($arr['iprnwt']);
+        $this->ibotavg = Ibotavg::fromInteger($arr['ibotavg']);
+        $this->options = NwtOptions::fromString($arr['options']);
+        $this->continue = NwtContinue::fromBool($arr['continue']);
+        $this->dbdtheta = Dbdtheta::fromFloat($arr['dbdtheta']);
+        $this->dbdkappa = Dbdkappa::fromFloat($arr['dbdkappa']);
+        $this->dbdgamma = Dbdgamma::fromFloat($arr['dbdgamma']);
+        $this->momfact = Momfact::fromFloat($arr['momfact']);
+        $this->backflag = Backflag::fromInteger($arr['backflag']);
+        $this->maxbackiter = Maxbackiter::fromInteger($arr['maxbackiter']);
+        $this->backtol = Backtol::fromFloat($arr['backtol']);
+        $this->backreduce = Backreduce::fromFloat($arr['backreduce']);
+        $this->maxitinner = Maxinner::fromInteger($arr['maxitinner']);
+        $this->ilumethod = Ilumethod::fromInteger($arr['ilumethod']);
+        $this->levfill = Levfill::fromInteger($arr['levfill']);
+        $this->stoptol = Stoptol::fromFloat($arr['stoptol']);
+        $this->msdr = Msdr::fromInteger($arr['msdr']);
+        $this->iacl = Iacl::fromInteger($arr['iacl']);
+        $this->norder = Norder::fromInteger($arr['norder']);
+        $this->level = Level::fromInteger($arr['level']);
+        $this->north = North::fromInteger($arr['north']);
+        $this->iredsys = Iredsys::fromInteger($arr['iredsys']);
+        $this->rrctols = Rrctools::fromFloat($arr['rrctols']);
+        $this->idroptol = Idroptol::fromInteger($arr['idroptol']);
+        $this->epsrn = Epsrn::fromFloat($arr['epsrn']);
+        $this->hclosexmd = Hclosexmd::fromFloat($arr['hclosexmd']);
+        $this->mxiterxmd = Mxiterxmd::fromInteger($arr['mxiterxmd']);
     }
 
     public function jsonSerialize(): array

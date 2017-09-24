@@ -9,18 +9,24 @@ use Inowas\ModflowModel\Model\Exception\ModflowModelNotFoundException;
 use Inowas\ModflowModel\Model\Exception\WriteAccessFailedException;
 use Inowas\ModflowModel\Model\ModflowModelList;
 use Inowas\ModflowModel\Model\ModflowModelAggregate;
+use Inowas\ModflowModel\Service\ModflowModelManager;
 
 final class UpdateActiveCellsHandler
 {
+
+    /** @var  ModflowModelManager */
+    private $modelManager;
 
     /** @var  ModflowModelList */
     private $modelList;
 
     /**
      * @param ModflowModelList $modelList
+     * @param ModflowModelManager $modelManager
      */
-    public function __construct(ModflowModelList $modelList)
+    public function __construct(ModflowModelList $modelList, ModflowModelManager $modelManager)
     {
+        $this->modelManager = $modelManager;
         $this->modelList = $modelList;
     }
 
@@ -33,15 +39,25 @@ final class UpdateActiveCellsHandler
             throw ModflowModelNotFoundException::withModelId($command->modelId());
         }
 
-        if (! $modflowModel->ownerId()->sameValueAs($command->userId())){
-            throw WriteAccessFailedException::withUserAndOwner($command->userId(), $modflowModel->ownerId());
+        if (! $modflowModel->userId()->sameValueAs($command->userId())){
+            throw WriteAccessFailedException::withUserAndOwner($command->userId(), $modflowModel->userId());
         }
 
-        if ($command->isArea()) {
-            $modflowModel->updateAreaActiveCells($command->userId(), $command->activeCells());
+        if ($command->isModelArea()) {
+            $currentActiveCells = $this->modelManager->getAreaActiveCells($command->modelId());
+
+            if (! $currentActiveCells->sameAs($command->activeCells())){
+                $modflowModel->updateAreaActiveCells($command->userId(), $command->activeCells());
+                $this->modelList->save($modflowModel);
+            }
+
             return;
         }
 
-        $modflowModel->updateBoundaryActiveCells($command->userId(), $command->boundaryId(), $command->activeCells());
+        $currentActiveCells = $this->modelManager->getBoundaryActiveCells($command->modelId(), $command->boundaryId());
+        if (! $currentActiveCells->sameAs($command->activeCells())) {
+            $modflowModel->updateBoundaryActiveCells($command->userId(), $command->boundaryId(), $command->activeCells());
+            $this->modelList->save($modflowModel);
+        }
     }
 }

@@ -4,19 +4,16 @@ declare(strict_types=1);
 
 namespace Inowas\ScenarioAnalysis\Model\Command;
 
+use Inowas\Common\Command\AbstractJsonSchemaCommand;
 use Inowas\Common\Id\ModflowId;
 use Inowas\Common\Id\UserId;
+use Inowas\Common\Status\Visibility;
 use Inowas\ScenarioAnalysis\Model\ScenarioAnalysisDescription;
 use Inowas\ScenarioAnalysis\Model\ScenarioAnalysisId;
 use Inowas\ScenarioAnalysis\Model\ScenarioAnalysisName;
-use Prooph\Common\Messaging\Command;
-use Prooph\Common\Messaging\PayloadConstructable;
-use Prooph\Common\Messaging\PayloadTrait;
 
-class CreateScenarioAnalysis extends Command implements PayloadConstructable
+class CreateScenarioAnalysis extends AbstractJsonSchemaCommand
 {
-
-    use PayloadTrait;
 
     /** @noinspection MoreThanThreeArgumentsInspection
      * @param ScenarioAnalysisId $scenarioAnalysisId
@@ -24,6 +21,7 @@ class CreateScenarioAnalysis extends Command implements PayloadConstructable
      * @param ModflowId $baseModelId
      * @param ScenarioAnalysisName $name
      * @param ScenarioAnalysisDescription $description
+     * @param Visibility $visibility
      * @return CreateScenarioAnalysis
      */
     public static function byUserWithBaseModelNameAndDescription(
@@ -31,26 +29,36 @@ class CreateScenarioAnalysis extends Command implements PayloadConstructable
         UserId $userId,
         ModflowId $baseModelId,
         ScenarioAnalysisName $name,
-        ScenarioAnalysisDescription $description
+        ScenarioAnalysisDescription $description,
+        Visibility $visibility
     ): CreateScenarioAnalysis
     {
-        return new self([
-            'scenarioanalysis_id' => $scenarioAnalysisId->toString(),
-            'user_id' => $userId->toString(),
-            'basemodel_id' => $baseModelId->toString(),
-            'name' => $name->toString(),
-            'description' => $description->toString()
-        ]);
+        $self = new static([
+                'id' => $scenarioAnalysisId->toString(),
+                'basemodel_id' => $baseModelId->toString(),
+                'name' => $name->toString(),
+                'description' => $description->toString(),
+                'public' => $visibility->isPublic()
+            ]);
+
+        /** @var CreateScenarioAnalysis $self */
+        $self = $self->withAddedMetadata('user_id', $userId->toString());
+        return $self;
+    }
+
+    public function schema(): string
+    {
+        return 'file://spec/schema/modflow/command/createScenarioAnalysisPayload.json';
     }
 
     public function scenarioAnalysisId(): ScenarioAnalysisId
     {
-        return ScenarioAnalysisId::fromString($this->payload['scenarioanalysis_id']);
+        return ScenarioAnalysisId::fromString($this->payload['id']);
     }
 
     public function userId(): UserId
     {
-        return UserId::fromString($this->payload['user_id']);
+        return UserId::fromString($this->metadata['user_id']);
     }
 
     public function baseModelId(): ModflowId
@@ -65,6 +73,15 @@ class CreateScenarioAnalysis extends Command implements PayloadConstructable
 
     public function description(): ScenarioAnalysisDescription
     {
+        if (! array_key_exists('description', $this->payload())) {
+            return ScenarioAnalysisDescription::fromString('');
+        }
+
         return ScenarioAnalysisDescription::fromString($this->payload['description']);
+    }
+
+    public function visibility(): Visibility
+    {
+        return Visibility::fromBool($this->payload['public']);
     }
 }

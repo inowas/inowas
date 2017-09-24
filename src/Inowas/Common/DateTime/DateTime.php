@@ -66,4 +66,9 @@ class DateTime
     {
         return ($this->toAtom() <= $object->toAtom());
     }
+
+    public function __toString(): string
+    {
+        return $this->toAtom();
+    }
 }

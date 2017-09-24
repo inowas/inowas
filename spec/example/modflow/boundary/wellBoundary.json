@@ -1,0 +1,26 @@
+{
+    "id": "well005",
+    "name": "well 005",
+    "geometry": {
+        "type": "Point",
+        "coordinates": [
+            10,
+            12
+        ]
+    },
+    "type": "wel",
+    "affected_layers": [
+        3
+    ],
+    "metadata": {
+        "well_type": "puw"
+    },
+    "date_time_values": [
+        {
+            "date_time": "2005-08-15T15:52:01+00:00",
+            "values": [
+                2
+            ]
+        }
+    ]
+}

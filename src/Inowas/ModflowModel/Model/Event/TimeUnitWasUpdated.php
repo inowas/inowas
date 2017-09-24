@@ -36,7 +36,7 @@ class TimeUnitWasUpdated extends AggregateChanged
         return $event;
     }
 
-    public function modflowId(): ModflowId
+    public function modelId(): ModflowId
     {
         if ($this->modflowModelId === null){
             $this->modflowModelId = ModflowId::fromString($this->aggregateId());

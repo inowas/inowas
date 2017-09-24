@@ -10,14 +10,14 @@ class AffectedLayers
     /** @var int[] */
     private $layers = [];
 
-    public static function createWithLayerNumber(LayerNumber $layerNumber)
+    public static function createWithLayerNumber(LayerNumber $layerNumber): AffectedLayers
     {
         $self = new self();
-        $self->layers = [$layerNumber->toInteger()];
+        $self->layers = [$layerNumber->toInt()];
         return $self;
     }
 
-    public static function createWithLayerNumbers(array $layerNumbers)
+    public static function createWithLayerNumbers(array $layerNumbers): AffectedLayers
     {
 
         if (count($layerNumbers) === 0){
@@ -32,7 +32,7 @@ class AffectedLayers
                 throw new \Exception();
             }
 
-            $layers[] = $layerNumber->toInteger();
+            $layers[] = $layerNumber->toInt();
         }
 
         $self = new self();
@@ -52,7 +52,7 @@ class AffectedLayers
     public function addLayerNumber(LayerNumber $layerNumber)
     {
         $self = new self();
-        $self->layers = $this->layers[$layerNumber->toInteger()];
+        $self->layers = $this->layers[$layerNumber->toInt()];
         return $self;
     }
 
@@ -60,7 +60,7 @@ class AffectedLayers
     {
         $layers = [];
         foreach ($this->layers as $layer){
-            $layers[] = LayerNumber::fromInteger($layer);
+            $layers[] = LayerNumber::fromInt($layer);
         }
         return $layers;
     }

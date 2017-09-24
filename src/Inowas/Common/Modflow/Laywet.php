@@ -11,6 +11,11 @@ namespace Inowas\Common\Modflow;
 
 class Laywet
 {
+
+    CONST WETTING_ACTIVE = 1;
+    CONST WETTING_INACTIVE = 0;
+
+
     protected $laywet;
 
     public static function fromArray(array $laywet): Laywet
@@ -35,6 +40,11 @@ class Laywet
     }
 
     public function toValue()
+    {
+        return $this->laywet;
+    }
+
+    public function toFloat(): float
     {
         return $this->laywet;
     }

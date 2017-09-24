@@ -34,6 +34,17 @@ final class StressPeriods implements \JsonSerializable
     }
 
     /**
+     * @return StressPeriods
+     */
+    public static function createDefault(): StressPeriods
+    {
+        $start = DateTime::fromDateTime(new \DateTime('2010-01-01'));
+        $end = DateTime::fromDateTime(new \DateTime('2015-12-31'));
+        $timeUnit = TimeUnit::fromInt(TimeUnit::DAYS);
+        return new self($start, $end, $timeUnit);
+    }
+
+    /**
      * @param DateTime[] $allDates
      * @param DateTime $start
      * @param DateTime $end
@@ -49,16 +60,15 @@ final class StressPeriods implements \JsonSerializable
         /** @var DateTime $date */
         foreach ($allDates as $date){
             if (! $date instanceof DateTime) {
-                // @Todo Throw Exception
+                continue;
             }
 
-            if ($date->greaterOrEqualThen($start) && $date->smallerOrEqualThen($end) && (!in_array($date, $uniqueDates))) {
+            if ($date->greaterOrEqualThen($start) && $date->smallerOrEqualThen($end) && (!in_array($date, $uniqueDates, false))) {
                 $uniqueDates[] = $date;
             }
         }
 
         sort($uniqueDates);
-
 
         $self = new self($start, $end, $timeUnit);
         $totalTimes = [];
@@ -66,8 +76,9 @@ final class StressPeriods implements \JsonSerializable
             $totalTimes[] = $self->calculateTotim($date);
         }
 
-        for ($i=1; $i < count($totalTimes); $i++){
-            $perlen = ($totalTimes[$i]->toInteger())-($totalTimes[$i-1]->toInteger());
+        $numberOfTotalTimes = count($totalTimes);
+        for ($i=1; $i < $numberOfTotalTimes; $i++){
+            $perlen = $totalTimes[$i]->toInteger()-$totalTimes[$i-1]->toInteger();
             $nstp = 1;
             $tsmult = 1;
             $steady = false;
@@ -84,7 +95,7 @@ final class StressPeriods implements \JsonSerializable
         return $self;
     }
 
-    public static function createFromArray(array $arr): StressPeriods
+    public static function fromArray(array $arr): StressPeriods
     {
         $self = new self(
             DateTime::fromAtom($arr['start_date_time']),
@@ -92,8 +103,8 @@ final class StressPeriods implements \JsonSerializable
             TimeUnit::fromInt($arr['time_unit'])
         );
 
+        /** @var array $stressPeriods */
         $stressPeriods = $arr['stress_periods'];
-
         foreach ($stressPeriods as $stressPeriod) {
 
             if (! StressPeriod::isValidArray($stressPeriod)) {
@@ -107,6 +118,11 @@ final class StressPeriods implements \JsonSerializable
         return $self;
     }
 
+    public static function createFromJson(string $json): StressPeriods
+    {
+        return self::fromArray(json_decode($json, true));
+    }
+
     private function __construct(DateTime $start, DateTime $end, TimeUnit $timeUnit) {
         $this->start = $start;
         $this->end = $end;
@@ -116,6 +132,30 @@ final class StressPeriods implements \JsonSerializable
     public function addStressPeriod(StressPeriod $stressPeriod): void
     {
         $this->stressperiods[] = $stressPeriod;
+    }
+
+    public function setFirstStressPeriodSteady(bool $steady): void
+    {
+        if (count($this->stressperiods)>0){
+            /** @var StressPeriod $firstStressPeriod */
+            $firstStressPeriod = $this->stressperiods[0];
+            $this->stressperiods[0] = StressPeriod::create(
+                $firstStressPeriod->totimStart(), $firstStressPeriod->perlen(), $firstStressPeriod->nstp(), $firstStressPeriod->tsmult(), $steady
+            );
+        }
+    }
+
+    public function setNstpEqualPerlenForTransient(): void
+    {
+
+        /** @var StressPeriod $stressperiod */
+        foreach ($this->stressperiods as $key => $stressperiod){
+            if (!$stressperiod->steady()) {
+                $this->stressperiods[$key] = StressPeriod::create(
+                    $stressperiod->totimStart(), $stressperiod->perlen(), $stressperiod->perlen(), $stressperiod->tsmult(), $stressperiod->steady()
+                );
+            }
+        }
     }
 
     public function perlen(): Perlen
@@ -188,11 +228,17 @@ final class StressPeriods implements \JsonSerializable
 
     public function toArray(): array
     {
+        $stressPeriods = [];
+        /** @var StressPeriod $stressperiod */
+        foreach ($this->stressperiods as $stressperiod) {
+            $stressPeriods[] = $stressperiod->toArray();
+        }
+
         return array(
-            "start_date_time" => $this->start->toAtom(),
-            "end_date_time" => $this->end->toAtom(),
-            "time_unit" => $this->timeUnit->toInt(),
-            "stress_periods" => $this->stressperiods
+            'start_date_time' => $this->start->toAtom(),
+            'end_date_time' => $this->end->toAtom(),
+            'time_unit' => $this->timeUnit->toInt(),
+            'stress_periods' => $stressPeriods
         );
     }
 
@@ -216,7 +262,7 @@ final class StressPeriods implements \JsonSerializable
         return $this->toArray();
     }
 
-    private function calculateTotim(DateTime $dateTime): TotalTime
+    private function calculateTotim(DateTime $dt): TotalTime
     {
         /** @var \DateTime $start */
         $start = clone $this->start->toDateTime();
@@ -225,9 +271,8 @@ final class StressPeriods implements \JsonSerializable
         $timeUnit = $this->timeUnit;
 
         /** @var \DateTime $dateTime */
-        $dateTime = clone $dateTime->toDateTime();
+        $dateTime = clone $dt->toDateTime();
 
-        $dateTime->modify('+1 day');
         $diff = $start->diff($dateTime);
 
         if ($timeUnit->toInt() === $timeUnit::SECONDS){
@@ -243,10 +288,14 @@ final class StressPeriods implements \JsonSerializable
         }
 
         if ($timeUnit->toInt() === $timeUnit::DAYS){
-            return TotalTime::fromInt((int)$diff->format("%a"));
+            return TotalTime::fromInt((int)$diff->format('%a'));
         }
 
         throw InvalidTimeUnitException::withTimeUnitAndAvailableTimeUnits($timeUnit, $timeUnit->availableTimeUnits);
     }
-}
 
+    public function toJson(): string
+    {
+        return json_encode($this);
+    }
+}

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Inowas\ModflowBundle\Command;
 
-use Doctrine\DBAL\Schema\Schema;
 use Inowas\Common\Id\UserId;
-use Prooph\EventStore\Adapter\Doctrine\Schema\EventStoreSchema;
+use Prooph\EventStore\Stream;
+use Prooph\EventStore\StreamName;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -28,27 +28,51 @@ class ModflowEventStoreCreateSchemaCommand extends ContainerAwareCommand
 
     protected function execute(InputInterface $input, OutputInterface $output): bool
     {
-        $this->createEventStreamTableIfNotExists('event_stream');
+        $this->createEventStreamsTable();
+        $config = $this->getContainer()->getParameter('prooph_event_store_repositories');
+
+        foreach ($config as $repo) {
+            $this->getContainer()->get('prooph_event_store')->create(
+                new Stream(new  StreamName($repo['stream_name']), new \ArrayIterator())
+            );
+        }
         return true;
     }
 
-    protected function createEventStreamTableIfNotExists($tableName): void
+    private function createEventStreamsTable(string $name = 'event_streams'): void
     {
         $connection = $this->getContainer()->get('doctrine.dbal.default_connection');
 
-        if (in_array($tableName, $connection->getSchemaManager()->listTableNames())){
-            return;
-        }
+        $sql = sprintf('CREATE TABLE IF NOT EXISTS %s (
+          no BIGSERIAL,
+          real_stream_name VARCHAR(150) NOT NULL,
+          stream_name CHAR(41) NOT NULL,
+          metadata JSONB,
+          category VARCHAR(150),
+          PRIMARY KEY (no),
+          UNIQUE (stream_name)
+        )', $name);
 
-        $schema = new Schema();
-        if (class_exists('Prooph\EventStore\Adapter\Doctrine\Schema\EventStoreSchema')) {
-            EventStoreSchema::createSingleStream($schema, $tableName, true);
-        }
+        $connection->exec($sql);
 
-        $queries = $schema->toSql($connection->getDatabasePlatform());
+        $sql = sprintf('CREATE INDEX on %s (category);', $name);
+        $connection->exec($sql);
 
-        foreach ($queries as $query){
-            $connection->exec($query);
-        }
+        $sql = <<<EOF
+          CREATE TABLE IF NOT EXISTS projections (
+              no BIGSERIAL,
+              name VARCHAR(150) NOT NULL,
+              position JSONB,
+              state JSONB,
+              status VARCHAR(28) NOT NULL,
+              locked_until CHAR(26),
+              PRIMARY KEY (no),
+              UNIQUE (name)
+        );
+EOF;
+
+        $connection->exec($sql);
+
     }
 }
+

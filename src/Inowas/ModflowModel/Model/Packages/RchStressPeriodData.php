@@ -19,20 +19,46 @@ class RchStressPeriodData extends AbstractStressPeriodData
         return $self;
     }
 
-    public function addStressPeriodValue(RchStressPeriodValue $value): RchStressPeriodData
+    public function addStressPeriodValue(RchStressPeriodValue $rcpValue): RchStressPeriodData
     {
-        $stressPeriod = $value->stressPeriod();
-        $rech = $value->rech();
+        $stressPeriod = $rcpValue->stressPeriod();
+        $rech = $rcpValue->rech();
 
-        if (! is_array($this->data)){
-            $this->data = array();
+        if (!array_key_exists($stressPeriod, $this->data)) {
+            $this->data[$stressPeriod] = $rech->toValue();
+            return $this;
         }
 
-        if (! array_key_exists($stressPeriod, $this->data)){
-            $this->data[$stressPeriod] = array();
+        /** @var array $currentData */
+        $currentData = $this->data[$stressPeriod];
+
+        /** @var array $currentData */
+        $newData = $rech->to2DArray();
+
+        $data = [];
+
+        /**
+         * @var int $rowNr
+         * @var array $row
+         */
+        foreach ($newData as $rowNr => $row) {
+            $data[$rowNr] = [];
+            foreach ($row as $colNr => $value) {
+
+                $cdata = $currentData;
+                if (is_array($currentData)) {
+                    $cdata = $currentData[$rowNr][$colNr];
+                }
+
+                if ($newData[$rowNr][$colNr] > $cdata) {
+                    $data[$rowNr][$colNr] = $newData[$rowNr][$colNr];
+                } else {
+                    $data[$rowNr][$colNr] = $cdata;
+                }
+            }
         }
 
-        $this->data[$stressPeriod] = $rech->toValue();
+        $this->data[$stressPeriod] = $data;
         return $this;
     }
 }

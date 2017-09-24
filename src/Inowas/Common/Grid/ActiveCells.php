@@ -10,7 +10,7 @@ class ActiveCells
      * Represents an 2D-Array of the active cells of a layer
      * @var array
      */
-    private $layerData = [];
+    private $layerData;
 
     /**
      * Represents the number of columns
@@ -45,7 +45,7 @@ class ActiveCells
         return new self($layerData, $layers, $gridSize);
     }
 
-    public static function fromFullArray(array $arr): ActiveCells
+    public static function from2DArray(array $arr): ActiveCells
     {
         $gridSize = GridSize::fromXY(count($arr), count($arr[0]));
         return new self($arr, [0], $gridSize);
@@ -72,6 +72,19 @@ class ActiveCells
         return new self($layerData, $layers);
     }
 
+    public static function from2DCells(array $arr, GridSize $gridSize, AffectedLayers $affectedLayers): ActiveCells
+    {
+        $layers = $affectedLayers->toArray();
+
+        $data = [];
+        foreach ($arr as $item){
+            $data[$item[0]] = array();
+            $data[$item[0]][$item[1]] = true;
+        }
+
+        return new self($data, $layers, $gridSize);
+    }
+
     private function __construct(array $layerData, array $layers, ?GridSize $gridSize = null)
     {
         $data = array();
@@ -88,7 +101,6 @@ class ActiveCells
         {
             $this->nx = $gridSize->nX();
             $this->ny = $gridSize->nY();
-
         }
 
         $this->layers = $layers;
@@ -121,6 +133,21 @@ class ActiveCells
         return $cells;
     }
 
+    public function cells2D(): array
+    {
+        $cells = [];
+
+        foreach ($this->layerData as $rowNumber => $row) {
+            foreach ($row as $colNumber => $isActive) {
+                if ($isActive === 1 || $isActive === true) {
+                    $cells[] = [(int)$rowNumber, (int)$colNumber];
+                }
+            }
+        }
+
+        return $cells;
+    }
+
     public function gridSize(): GridSize
     {
         return GridSize::fromXY($this->nx, $this->ny);
@@ -141,7 +168,7 @@ class ActiveCells
         return AffectedLayers::fromArray($this->layers);
     }
 
-    public function fullArray(): array
+    public function to2DArray(): array
     {
         $cells = [];
         for ($iR=0; $iR<$this->ny; $iR++){
@@ -153,7 +180,7 @@ class ActiveCells
 
         foreach ($this->layerData as $row => $cols){
             foreach ($cols as $col => $value){
-                $cells[intval($row)][intval($col)] = $value;
+                $cells[(int)$row][(int)$col] = $value;
             }
         }
 
@@ -173,5 +200,10 @@ class ActiveCells
     public function count(): int
     {
         return count($this->cells());
+    }
+
+    public function sameAs(ActiveCells $activeCells): bool
+    {
+        return $this->toArray() === $activeCells->toArray();
     }
 }

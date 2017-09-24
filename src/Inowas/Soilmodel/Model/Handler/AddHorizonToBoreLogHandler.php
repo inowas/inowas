@@ -30,5 +30,6 @@ final class AddHorizonToBoreLogHandler
         }
 
         $boreLog->addHorizon($command->userId(), $command->horizon());
+
     }
 }

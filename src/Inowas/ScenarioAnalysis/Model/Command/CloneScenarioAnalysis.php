@@ -4,40 +4,52 @@ declare(strict_types=1);
 
 namespace Inowas\ScenarioAnalysis\Model\Command;
 
+use Inowas\Common\Command\AbstractJsonSchemaCommand;
 use Inowas\Common\Id\UserId;
 use Inowas\ScenarioAnalysis\Model\ScenarioAnalysisId;
-use Prooph\Common\Messaging\Command;
-use Prooph\Common\Messaging\PayloadConstructable;
-use Prooph\Common\Messaging\PayloadTrait;
 
-class CloneScenarioAnalysis extends Command implements PayloadConstructable
+class CloneScenarioAnalysis extends AbstractJsonSchemaCommand
 {
-
-    use PayloadTrait;
-
     /**
      * @param UserId $userId
-     * @param ScenarioAnalysisId $scenarioAnalysisId
+     * @param ScenarioAnalysisId $id
+     * @param ScenarioAnalysisId $newId
      * @return CloneScenarioAnalysis
      */
-    public static function byUserWithId(
+    public static function byUserWithIds(
         UserId $userId,
-        ScenarioAnalysisId $scenarioAnalysisId
+        ScenarioAnalysisId $id,
+        ScenarioAnalysisId $newId
     ): CloneScenarioAnalysis
     {
-        return new self([
-            'scenarioanalysis_id' => $scenarioAnalysisId->toString(),
-            'user_id' => $userId->toString()
+        $self = new static([
+            'id' => $id->toString(),
+            'new_id' => $newId->toString(),
         ]);
+
+        /** @var CloneScenarioAnalysis $self */
+        $self = $self->withAddedMetadata('user_id', $userId->toString());
+        return $self;
     }
 
-    public function scenarioAnalysisId(): ScenarioAnalysisId
+    public function schema(): string
     {
-        return ScenarioAnalysisId::fromString($this->payload['scenarioanalysis_id']);
+        return 'file://spec/schema/modflow/command/cloneScenarioAnalysisPayload.json';
+    }
+
+    public function id(): ScenarioAnalysisId
+    {
+        return ScenarioAnalysisId::fromString($this->payload['id']);
+    }
+
+
+    public function newId(): ScenarioAnalysisId
+    {
+        return ScenarioAnalysisId::fromString($this->payload['new_id']);
     }
 
     public function userId(): UserId
     {
-        return UserId::fromString($this->payload['user_id']);
+        return UserId::fromString($this->metadata['user_id']);
     }
 }

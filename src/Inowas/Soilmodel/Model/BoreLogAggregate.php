@@ -9,12 +9,14 @@ use Inowas\Common\Soilmodel\BoreLogId;
 use Inowas\Common\Soilmodel\BoreLogLocation;
 use Inowas\Common\Soilmodel\BoreLogName;
 use Inowas\Common\Soilmodel\Horizon;
+use Inowas\Common\Soilmodel\HorizonId;
 use Inowas\Soilmodel\Model\Event\BoreLogHorizonWasAdded;
 use Inowas\Soilmodel\Model\Event\BoreLogHorizonWasRemoved;
 use Inowas\Soilmodel\Model\Event\BoreLogLocationWasChanged;
 use Inowas\Soilmodel\Model\Event\BoreLogNameWasChanged;
 use Inowas\Soilmodel\Model\Event\BoreLogWasCreated;
 use Inowas\Soilmodel\Model\Event\BoreLogWasDeleted;
+use Prooph\EventSourcing\AggregateChanged;
 use Prooph\EventSourcing\AggregateRoot;
 
 class BoreLogAggregate extends AggregateRoot
@@ -74,11 +76,11 @@ class BoreLogAggregate extends AggregateRoot
         $this->recordThat(BoreLogHorizonWasAdded::byUserWithHorizon($userId, $this->boreLogId, $horizon));
     }
 
-    public function removeHorizon(UserId $userId, Horizon $horizon): void
+    public function removeHorizon(UserId $userId, HorizonId $horizonId): void
     {
-        if (array_key_exists($horizon->id()->toString(), $this->horizons)){
-            unset($this->horizons[$horizon->id()->toString()]);
-            $this->recordThat(BoreLogHorizonWasRemoved::byUserWithHorizonId($userId, $this->boreLogId, $horizon->id()));
+        if (array_key_exists($horizonId->toString(), $this->horizons)){
+            unset($this->horizons[$horizonId->toString()]);
+            $this->recordThat(BoreLogHorizonWasRemoved::byUserWithHorizonId($userId, $this->boreLogId, $horizonId));
         }
     }
 
@@ -148,5 +150,23 @@ class BoreLogAggregate extends AggregateRoot
     protected function aggregateId(): string
     {
         return $this->boreLogId->toString();
+    }
+
+    protected function apply(AggregateChanged $e): void
+    {
+        $handler = $this->determineEventHandlerMethodFor($e);
+        if (! method_exists($this, $handler)) {
+            throw new \RuntimeException(sprintf(
+                'Missing event handler method %s for aggregate root %s',
+                $handler,
+                get_class($this)
+            ));
+        }
+        $this->{$handler}($e);
+    }
+
+    protected function determineEventHandlerMethodFor(AggregateChanged $e)
+    {
+        return 'when' . implode(array_slice(explode('\\', get_class($e)), -1));
     }
 }

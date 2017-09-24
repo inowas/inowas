@@ -2,8 +2,8 @@
 
 namespace Tests\Inowas\Common\Modflow;
 
-use Inowas\Common\Modflow\OcStressPeriod;
-use Inowas\Common\Modflow\OcStressPeriodData;
+use Inowas\ModflowModel\Model\Packages\OcStressPeriod;
+use Inowas\ModflowModel\Model\Packages\OcStressPeriodData;
 
 class OcStressPeriodDataTest extends \PHPUnit_Framework_TestCase
 {
@@ -12,13 +12,10 @@ class OcStressPeriodDataTest extends \PHPUnit_Framework_TestCase
     {
         $ocStressPeriodData = OcStressPeriodData::create();
         $ocStressPeriodData = $ocStressPeriodData->addStressPeriod(OcStressPeriod::fromParams(0,1,['save head']));
-
-        $obj = json_decode(json_encode($ocStressPeriodData));
-        $this->assertObjectHasAttribute('stress_period_data', $obj);
-        $stressPeriodData = $obj->stress_period_data;
-        $this->assertTrue(is_array($stressPeriodData));
-        $this->assertCount(1, $stressPeriodData);
-        $sp = $obj->stress_period_data[0];
+        $arr = json_decode(json_encode($ocStressPeriodData));
+        $this->assertTrue(is_array($arr));
+        $this->assertCount(1, $arr);
+        $sp = $arr[0];
         $this->assertObjectHasAttribute('stressPeriod', $sp);
         $this->assertObjectHasAttribute('timeStep', $sp);
         $this->assertObjectHasAttribute('type', $sp);

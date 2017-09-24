@@ -30,14 +30,14 @@ final class DeleteModflowModelHandler
             throw ModflowModelNotFoundException::withModelId($command->modelId());
         }
 
-        if (! $command->userId()->sameValueAs($modflowModel->ownerId())){
+        if (! $command->userId()->sameValueAs($modflowModel->userId())){
             throw AccessDeniedException::withMessage(sprintf(
                 'Access denied to delete Model with id %s.',
                 $command->modelId()->toString()
             ));
         }
 
-        $modflowModel->deleteModel($command->userId());
-
+        $modflowModel->delete($command->userId());
+        $this->modelList->save($modflowModel);
     }
 }

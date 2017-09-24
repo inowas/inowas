@@ -23,6 +23,8 @@ class BoundingBoxWasChanged extends AggregateChanged
 
     public static function withBoundingBox(UserId $userId, ModflowId $modflowModelId, BoundingBox $boundingBox): BoundingBoxWasChanged
     {
+
+        /** @var BoundingBoxWasChanged $event */
         $event = self::occur(
             $modflowModelId->toString(), [
                 'user_id' => $userId->toString(),
@@ -37,7 +39,7 @@ class BoundingBoxWasChanged extends AggregateChanged
         return $event;
     }
 
-    public function modflowId(): ModflowId
+    public function modelId(): ModflowId
     {
         if ($this->modflowModelId === null){
             $this->modflowModelId = ModflowId::fromString($this->aggregateId());

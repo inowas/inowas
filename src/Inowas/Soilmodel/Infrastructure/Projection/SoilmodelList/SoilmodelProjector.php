@@ -17,14 +17,15 @@ class SoilmodelProjector extends AbstractDoctrineConnectionProjector
 
         parent::__construct($connection);
 
-        $this->schema = new Schema();
-        $table = $this->schema->createTable(Table::SOILMODEL_LIST);
+        $schema = new Schema();
+        $table = $schema->createTable(Table::SOILMODEL_LIST);
         $table->addColumn('id', 'integer', array("unsigned" => true, "autoincrement" => true));
         $table->addColumn('user_id', 'string', ['length' => 36]);
         $table->addColumn('soilmodel_id', 'string', ['length' => 36]);
         $table->addColumn('name', 'string', ['length' => 255]);
         $table->addColumn('description', 'string', ['length' => 255]);
         $table->setPrimaryKey(['id']);
+        $this->addSchema($schema);
     }
 
     public function onSoilmodelWasCreated(SoilmodelWasCreated $event): void

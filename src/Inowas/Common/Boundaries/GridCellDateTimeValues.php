@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Inowas\Common\Boundaries;
 
+use Inowas\Common\DateTime\DateTime;
+
 class GridCellDateTimeValues
 {
     /** @var int  */
@@ -15,15 +17,15 @@ class GridCellDateTimeValues
     /** @var int  */
     private $column;
 
-    /** @var DateTimeValue[] */
+    /** @var DateTimeValuesCollection */
     private $dateTimeValues;
 
-    public static function fromParams(int $layer, int $row, int $column, array $dateTimeValues): GridCellDateTimeValues
+    public static function fromParams(int $layer, int $row, int $column, DateTimeValuesCollection $dateTimeValues): GridCellDateTimeValues
     {
         return new self($layer, $row, $column, $dateTimeValues);
     }
 
-    private function __construct(int $layer, int $row, int $column, array $dateTimeValues)
+    private function __construct(int $layer, int $row, int $column, DateTimeValuesCollection $dateTimeValues)
     {
         $this->layer = $layer;
         $this->row = $row;
@@ -46,32 +48,13 @@ class GridCellDateTimeValues
         return $this->column;
     }
 
-    public function dateTimeValues(): array
+    public function dateTimeValues(): DateTimeValuesCollection
     {
         return $this->dateTimeValues;
     }
 
-    public function findValueByDateTime(\DateTimeImmutable $dateTime): ?DateTimeValue
+    public function findValueByDateTime(DateTime $dateTime): ?DateTimeValue
     {
-        $values = $this->dateTimeValues();
-        usort($values, function ($v1, $v2) {
-
-            /** @var $v1 DateTimeValue */
-            $dtV1 = $v1->dateTime();
-
-            /** @var $v2 DateTimeValue */
-            $dtV2 = $v2->dateTime();
-
-            return ($dtV1 < $dtV2) ? +1 : -1;
-        });
-
-        /** @var DateTimeValue $value */
-        foreach ($values as $value) {
-            if ($dateTime >= $value->dateTime()){
-                return $value;
-            }
-        }
-
-        return null;
+        return $this->dateTimeValues->findValueByDateTime($dateTime);
     }
 }

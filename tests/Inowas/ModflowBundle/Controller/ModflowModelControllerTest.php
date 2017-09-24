@@ -8,6 +8,11 @@ use FOS\UserBundle\Doctrine\UserManager;
 use Inowas\AppBundle\Model\User;
 use Inowas\Common\Id\ModflowId;
 use Inowas\Common\Id\UserId;
+use Inowas\Common\SchemaValidator\UrlReplaceLoader;
+use Inowas\ModflowModel\Model\Command\AddBoundary;
+use Inowas\ModflowModel\Model\Command\CalculateModflowModel;
+use League\JsonGuard\Validator;
+use League\JsonReference\Dereferencer;
 use Ramsey\Uuid\Uuid;
 use Tests\Inowas\ModflowBundle\EventSourcingBaseTest;
 
@@ -53,10 +58,7 @@ class ModflowModelControllerTest extends EventSourcingBaseTest
         $client = static::createClient();
         $client->request(
             'GET',
-            '/v2/modflowmodels',
-            array(),
-            array(),
-            array()
+            '/v2/modflowmodels'
         );
 
         $response = $client->getResponse();
@@ -67,7 +69,7 @@ class ModflowModelControllerTest extends EventSourcingBaseTest
     /**
      * @test
      */
-    public function it_returns_403_unauthorized_when_api_key_not_known(): void
+    public function it_returns_401_unauthorized_when_api_key_not_known(): void
     {
         $client = static::createClient();
         $client->request(
@@ -79,7 +81,7 @@ class ModflowModelControllerTest extends EventSourcingBaseTest
         );
 
         $response = $client->getResponse();
-        $this->assertEquals(403, $response->getStatusCode());
+        $this->assertEquals(401, $response->getStatusCode());
         $this->assertEquals('Username could not be found.', json_decode($response->getContent())->message);
     }
 
@@ -93,7 +95,7 @@ class ModflowModelControllerTest extends EventSourcingBaseTest
         $username = $this->user->getName();
 
         $modelId = ModflowId::generate();
-        $this->createModelWithName($userId, $modelId);
+        $this->createModelWithOneLayer($userId, $modelId);
 
         $client = static::createClient();
         $client->request(
@@ -128,7 +130,7 @@ class ModflowModelControllerTest extends EventSourcingBaseTest
         $username = $this->user->getName();
 
         $modelId = ModflowId::generate();
-        $this->createModelWithName($userId, $modelId);
+        $this->createModelWithOneLayer($userId, $modelId);
 
         $client = static::createClient();
         $client->request(
@@ -156,75 +158,150 @@ class ModflowModelControllerTest extends EventSourcingBaseTest
     /**
      * @test
      */
-    public function it_creates_a_new_model(): void
+    public function it_returns_the_model_details(): void
     {
-        $apiKey = $this->user->getApiKey();
         $userId = UserId::fromString($this->user->getId()->toString());
-        $username = $this->user->getName();
+        $apiKey = $this->user->getApiKey();
 
-        $body = new \stdClass();
-        $body->name = "Hanoi 2005-2007";
-        $body->description = "ModflowModel of Hanoi Area 2005-2007";
-        $body->area_geometry = new \stdClass();
-        $body->area_geometry->type = "polygon";
-        $body->area_geometry->coordinates = [[[12.1, 10.2], [12.2, 10.2], [12.2, 10.1], [12.1, 10.1], [12.1, 10.2]]];
-        $body->grid_size = new \stdClass();
-        $body->grid_size->n_x = 100;
-        $body->grid_size->n_y = 120;
-        $body->time_unit = 4;
-        $body->length_unit = 2;
+        $modelId = ModflowId::generate();
+        $this->createModelWithOneLayer($userId, $modelId);
 
         $client = static::createClient();
         $client->request(
-            'POST',
-            '/v2/modflowmodels',
+            'GET',
+            sprintf('/v2/modflowmodels/%s', $modelId->toString()),
             array(),
             array(),
-            array('CONTENT_TYPE' => 'application/json', 'HTTP_X-AUTH-TOKEN' => $apiKey),
-            json_encode($body)
+            array('HTTP_X-AUTH-TOKEN' => $apiKey)
         );
 
         $response = $client->getResponse();
-        $this->assertEquals(302, $response->getStatusCode());
-        $client->followRedirect();
-        $response = $client->getResponse();
-        $modelDetails = json_decode($response->getContent(), true);
+        $this->assertEquals(200, $response->getStatusCode());
 
-        $this->assertTrue(array_key_exists('id', $modelDetails));
-        $this->assertTrue(array_key_exists('user_id', $modelDetails));
-        $this->assertEquals($userId->toString(), $modelDetails['user_id']);
-        $this->assertTrue(array_key_exists('user_name', $modelDetails));
-        $this->assertEquals($username, $modelDetails['user_name']);
+        $content = json_decode($response->getContent(), true);
+        $schema = file_get_contents('spec/schema/modflow/modflowModel.json');
+        $dereferencer = Dereferencer::draft4();
+        $dereferencer->getLoaderManager()->registerLoader('https', new UrlReplaceLoader());
+        $dereferencedSchema = $dereferencer->dereference(json_decode($schema));
+
+        $content = json_decode(json_encode($content));
+        $validator = new Validator($content, $dereferencedSchema);
+        $this->assertTrue($validator->passes(), var_export($validator->errors(), true));
     }
 
     /**
      * @test
      */
-    public function it_throws_invalid_input_creating_a_new_model_without_name(): void
+    public function it_returns_the_boundary_list(): void
     {
+        $userId = UserId::fromString($this->user->getId()->toString());
         $apiKey = $this->user->getApiKey();
-        $body = new \stdClass();
-        $body->description = "ModflowModel of Hanoi Area 2005-2007";
-        $body->area_geometry = new \stdClass();
-        $body->area_geometry->type = "polygon";
-        $body->area_geometry->coordinates = [[[12.1, 10.2], [12.2, 10.2], [12.2, 10.1], [12.1, 10.1], [12.1, 10.2]]];
-        $body->grid_size = new \stdClass();
-        $body->grid_size->n_x = 100;
-        $body->grid_size->n_y = 120;
-        $body->time_unit = 4;
-        $body->length_unit = 2;
+
+        $modelId = ModflowId::generate();
+        $this->createModelWithOneLayer($userId, $modelId);
+        #$this->commandBus->dispatch(AddBoundary::forModflowModel($userId, $modelId, $this->createConstantHeadBoundaryWithObservationPoint()));
+        #$this->commandBus->dispatch(AddBoundary::forModflowModel($userId, $modelId, $this->createGeneralHeadBoundaryWithObservationPoint()));
+        #$this->commandBus->dispatch(AddBoundary::forModflowModel($userId, $modelId, $this->createRechargeBoundary()));
+        $this->commandBus->dispatch(AddBoundary::forModflowModel($userId, $modelId, $this->createRiverBoundaryWithObservationPoint()));
+        $this->commandBus->dispatch(AddBoundary::forModflowModel($userId, $modelId, $this->createWellBoundary()));
 
         $client = static::createClient();
         $client->request(
-            'POST',
-            '/v2/modflowmodels',
+            'GET',
+            sprintf('/v2/modflowmodels/%s/boundaries', $modelId->toString()),
             array(),
             array(),
-            array('CONTENT_TYPE' => 'application/json', 'HTTP_X-AUTH-TOKEN' => $apiKey),
-            json_encode($body)
+            array('HTTP_X-AUTH-TOKEN' => $apiKey)
         );
 
         $response = $client->getResponse();
-        $this->assertEquals(422, $response->getStatusCode());
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $content = json_decode($response->getContent(), true);
+        $schema = file_get_contents('spec/schema/modflow/boundary/boundaryList.json');
+        $dereferencer = Dereferencer::draft4();
+        $dereferencer->getLoaderManager()->registerLoader('https', new UrlReplaceLoader());
+        $dereferencedSchema = $dereferencer->dereference(json_decode($schema));
+
+        $content = json_decode(json_encode($content));
+        $validator = new Validator($content, $dereferencedSchema);
+        $this->assertTrue($validator->passes(), var_export($validator->errors(), true));
+    }
+
+    /**
+     * @test
+     */
+    public function it_returns_the_model_stressperiods(): void
+    {
+        $userId = UserId::fromString($this->user->getId()->toString());
+        $apiKey = $this->user->getApiKey();
+
+        $modelId = ModflowId::generate();
+        $this->createModelWithOneLayer($userId, $modelId);
+
+        $client = static::createClient();
+        $client->request(
+            'GET',
+            sprintf('/v2/modflowmodels/%s/stressperiods', $modelId->toString()),
+            array(),
+            array(),
+            array('HTTP_X-AUTH-TOKEN' => $apiKey)
+        );
+
+        $response = $client->getResponse();
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $content = json_decode($response->getContent(), true);
+        $schema = file_get_contents('spec/schema/modflow/stressPeriods.json');
+        $dereferencer = Dereferencer::draft4();
+        $dereferencer->getLoaderManager()->registerLoader('https', new UrlReplaceLoader());
+        $dereferencedSchema = $dereferencer->dereference(json_decode($schema));
+
+        $content = json_decode(json_encode($content));
+        $validator = new Validator($content, $dereferencedSchema);
+        $this->assertTrue($validator->passes(), var_export($validator->errors(), true));
+    }
+
+    /**
+     * @test
+     * @group messaging-integration-tests
+     */
+    public function it_returns_the_calculation_state(): void
+    {
+        $userId = UserId::fromString($this->user->getId()->toString());
+        $apiKey = $this->user->getApiKey();
+
+        $modelId = ModflowId::generate();
+        $this->createModelWithOneLayer($userId, $modelId);
+        $this->commandBus->dispatch(CalculateModflowModel::forModflowModelWitUserId($userId, $modelId));
+
+        $client = static::createClient();
+        $client->request(
+            'GET',
+            sprintf('/v2/modflowmodels/%s/calculation', $modelId->toString()),
+            array(),
+            array(),
+            array('HTTP_X-AUTH-TOKEN' => $apiKey)
+        );
+
+        $response = $client->getResponse();
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $json = $response->getContent();
+        $this->assertJson($json);
+        $arr = json_decode($json, true);
+        $this->assertArrayHasKey('calculation_id', $arr);
+        $this->assertArrayHasKey('state', $arr);
+        $this->assertArrayHasKey('message', $arr);
+
+        $content = json_decode($response->getContent(), true);
+        $schema = file_get_contents('spec/schema/modflow/calculationState.json');
+        $dereferencer = Dereferencer::draft4();
+        $dereferencer->getLoaderManager()->registerLoader('https', new UrlReplaceLoader());
+        $dereferencedSchema = $dereferencer->dereference(json_decode($schema));
+
+        $content = json_decode(json_encode($content));
+        $validator = new Validator($content, $dereferencedSchema);
+        $this->assertTrue($validator->passes(), var_export($validator->errors(), true));
     }
 }

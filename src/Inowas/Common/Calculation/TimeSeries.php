@@ -76,9 +76,9 @@ class TimeSeries implements \JsonSerializable
     {
         return array(
             'type' => $this->type->toString(),
-            'layer' => $this->layer->toInteger(),
-            'row' => $this->row->toInteger(),
-            'column' => $this->column->toInteger(),
+            'layer' => $this->layer->toInt(),
+            'row' => $this->row->toInt(),
+            'column' => $this->column->toInt(),
             'data' => $this->data->toArray()
         );
     }

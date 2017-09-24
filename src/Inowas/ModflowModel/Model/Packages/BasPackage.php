@@ -66,7 +66,6 @@ class BasPackage implements PackageInterface
         return $self;
     }
 
-
     /** @noinspection MoreThanThreeArgumentsInspection
      * @param Ibound $ibound
      * @param Strt $strt
@@ -218,6 +217,11 @@ class BasPackage implements PackageInterface
         return $package;
     }
 
+    public function isValid(): bool
+    {
+        return true;
+    }
+
     public function toArray(): array
     {
         return array(
@@ -231,6 +235,14 @@ class BasPackage implements PackageInterface
             'unitnumber' => $this->unitnumber->toValue()
         );
     }
+
+    public function getEditables(): array
+    {
+        return $this->toArray();
+    }
+
+    public function mergeEditables(array $arr): void
+    {}
 
     /**
      * @return array

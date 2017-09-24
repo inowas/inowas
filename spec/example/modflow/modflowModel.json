@@ -1,0 +1,33 @@
+{
+    "id": "f3f6788a-61a6-410e-a14d-af7ecca6babb",
+    "name": "NewModflowModel",
+    "description": "NewModflowModelDescription",
+    "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+            [-5e6, -1e6],
+            [-4e6, 1e6],
+            [-3e6, -1e6],
+            [-5e6, -1e6]
+        ]]
+    },
+    "bounding_box": [
+        [12.1, 1.0],
+        [12.8, 1.5]
+    ],
+    "grid_size": {
+        "n_x": 50,
+        "n_y": 60
+    },
+    "time_unit": 2,
+    "length_unit": 2,
+    "public": true,
+    "permissions": "rwx",
+    "active_cells": [
+        [2, 2],
+        [2, 3],
+        [2, 4],
+        [2, 5],
+        [2, 6]
+    ]
+}

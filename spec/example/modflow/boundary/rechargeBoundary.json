@@ -1,0 +1,21 @@
+{
+    "id": "recharge006",
+    "name": "Recharge 006",
+    "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[10, 12], [10, 13], [10, 14], [10, 15], [10, 16], [10, 12]]]
+    },
+    "type": "rch",
+    "affected_layers": [
+        0
+    ],
+    "metadata": {},
+    "date_time_values": [
+        {
+            "date_time": "2005-08-15T15:52:01+00:00",
+            "values": [
+                2
+            ]
+        }
+    ]
+}

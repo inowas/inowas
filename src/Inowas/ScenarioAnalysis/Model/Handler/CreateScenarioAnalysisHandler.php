@@ -29,6 +29,7 @@ final class CreateScenarioAnalysisHandler
             $command->description()
         );
 
-        $this->scenarioAnalysisList->add($scenarioAnalysis);
+        $scenarioAnalysis->changeVisibility($command->userId(), $command->visibility());
+        $this->scenarioAnalysisList->save($scenarioAnalysis);
     }
 }

@@ -1,0 +1,59 @@
+{
+    "uuid": "457cd469-670e-48c8-a40a-748cf36f641e",
+    "message_name": "addBoundary",
+    "metadata": {},
+    "payload": {
+        "id": "f3f6788a-61a6-410e-a14d-af7ecca6babb",
+        "boundary": {
+            "id": "chd005",
+            "name": "Constant Head 005",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [[10, 12], [10.1, 12.1], [10.2, 12.2], [10.3, 12.3], [10.4, 12.4], [10.5, 12.5], [10.6, 12.6]]
+            },
+            "type": "chd",
+            "affected_layers": [0, 1, 2],
+            "metadata": {},
+            "observation_points": [
+                {
+                    "id": "op1",
+                    "name": "OP1",
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [
+                            10.1,
+                            12.1
+                        ]
+                    },
+                    "date_time_values": [
+                        {
+                            "date_time": "2005-08-15T15:52:01+00:00",
+                            "values": [
+                                2.1, 3.2
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "id": "op2",
+                    "name": "OP2",
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [
+                            10.2,
+                            12.2
+                        ]
+                    },
+                    "date_time_values": [
+                        {
+                            "date_time": "2005-08-15T15:52:01+00:00",
+                            "values": [
+                                2.1, 3.2
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}
