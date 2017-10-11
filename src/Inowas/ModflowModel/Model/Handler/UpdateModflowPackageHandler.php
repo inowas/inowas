@@ -17,6 +17,9 @@ final class UpdateModflowPackageHandler
     /** @var  ModflowModelList */
     private $modelList;
 
+    /** @var  ModflowPackagesManager */
+    private $packagesManager;
+
     /**
      * @param ModflowModelList $modelList
      */
@@ -38,7 +41,13 @@ final class UpdateModflowPackageHandler
             throw WriteAccessFailedException::withUserAndOwner($command->userId(), $modflowModel->userId());
         }
 
-        $modflowModel->updateModflowPackage($command->userId(), $command->packageName(), $command->data());
+
+        $packages = $this->packagesManager->getPackagesByModelId($command->modelId());
+
+
+
+
+        $modflowModel->updateModflowPackageParameter($command->userId(), $command->packageName(), $command->parameterName(), $command->data());
         $this->modelList->save($modflowModel);
     }
 }

@@ -3,3 +3,4 @@ services:
         class: Inowas\Tool\Infrastructure\Projection\ToolFinder
         arguments:
           - '@doctrine.dbal.default_connection'
+

@@ -116,47 +116,6 @@ class ModflowModelController extends InowasRestController
     }
 
     /**
-     * Get activeCells of modflow model by id.
-     *
-     * @ApiDoc(
-     *   resource = true,
-     *   description = "Get details of modflow model by id.",
-     *   statusCodes = {
-     *     200 = "Returned when successful"
-     *   }
-     * )
-     *
-     * @param string $id
-     * @Rest\Get("/modflowmodels/{id}/activecells")
-     * @return JsonResponse
-     * @throws \InvalidArgumentException
-     * @throws \Inowas\ModflowBundle\Exception\AccessDeniedException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws NotFoundException
-     */
-    public function getModflowModelActiveCellsAction(string $id): JsonResponse
-    {
-        $this->assertUuidIsValid($id);
-        $modelId = ModflowId::fromString($id);
-        $userId = $this->getUserId();
-
-        if (! $this->get('inowas.modflowmodel.model_finder')->userHasReadAccessToModel($userId, $modelId)) {
-            throw AccessDeniedException::withMessage(
-                sprintf(
-                    'Model not found or user with Id %s does not have access to model with id %s',
-                    $userId->toString(),
-                    $modelId->toString()
-                )
-            );
-        }
-
-        $activeCells = $this->container->get('inowas.modflowmodel.manager')->getAreaActiveCells($modelId);
-
-        return (new JsonResponse())->setData($activeCells->cells2D());
-    }
-
-    /**
      * Get list of boundaries from modflowmodel by id.
      *
      * @ApiDoc(
@@ -220,48 +179,7 @@ class ModflowModelController extends InowasRestController
             ));
         }
 
-        $bArray = $boundary->toArray();
-        $bArray['active_cells'] = $this->get('inowas.modflowmodel.active_cells_manager')->getBoundaryActiveCells($modelId, $boundaryId)->cells2D();
-
-        return new JsonResponse($bArray);
-    }
-
-    /**
-     * Get packages modflowModel by id.
-     *
-     * @ApiDoc(
-     *   resource = true,
-     *   description = "Get packages modflowModel by id.",
-     *   statusCodes = {
-     *     200 = "Returned when successful"
-     *   }
-     * )
-     *
-     * @param string $id
-     * @return JsonResponse
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
-     * @throws AccessDeniedException
-     * @Rest\Get("/modflowmodels/{id}/packages")
-     */
-    public function getModflowModelPackagesAction(string $id): JsonResponse
-    {
-        $this->assertUuidIsValid($id);
-        $modelId = ModflowId::fromString($id);
-        $userId = $this->getUserId();
-
-        if (! $this->get('inowas.modflowmodel.model_finder')->userHasReadAccessToModel($userId, $modelId)) {
-            throw AccessDeniedException::withMessage(
-                sprintf(
-                    'Model not found or user with Id %s does not have access to model with id %s',
-                    $userId->toString(),
-                    $modelId->toString()
-                )
-            );
-        }
-
-        $packages = $this->container->get('inowas.modflowmodel.modflow_packages_manager')->getPackagesByModelId($modelId);
-        return new JsonResponse($packages->metaData());
+        return new JsonResponse($boundary->toArray());
     }
 
     /**
@@ -283,7 +201,7 @@ class ModflowModelController extends InowasRestController
      * @throws AccessDeniedException
      * @Rest\Get("/modflowmodels/{id}/packages/{package}")
      */
-    public function getModflowModelPackageAction(string $id, string $package): JsonResponse
+    public function getModflowModelPackagesAction(string $id, string $package): JsonResponse
     {
         $this->assertUuidIsValid($id);
         $modelId = ModflowId::fromString($id);

@@ -31,7 +31,6 @@ parameters:
                         'Inowas\ModflowModel\Model\Command\UpdateCalculationId': 'inowas.modflowmodel.update_calculation_id_handler'
                         'Inowas\ModflowModel\Model\Command\UpdateLengthUnit': 'inowas.modflowmodel.update_length_unit_handler'
                         'Inowas\ModflowModel\Model\Command\UpdateModflowModel': 'inowas.modflowmodel.update_modflow_model_handler'
-                        'Inowas\ModflowModel\Model\Command\UpdateModflowPackage': 'inowas.modflowmodel.update_modflow_package_handler'
                         'Inowas\ModflowModel\Model\Command\UpdateModflowPackageParameter': 'inowas.modflowmodel.update_modflow_package_parameter_handler'
                         'Inowas\ModflowModel\Model\Command\UpdateSoilmodelMetadata': 'inowas.modflowmodel.update_soilmodel_metadata_handler'
                         'Inowas\ModflowModel\Model\Command\UpdateStressPeriods': 'inowas.modflowmodel.update_stress_periods_handler'
@@ -65,11 +64,6 @@ parameters:
                         'Inowas\Soilmodel\Model\Command\CreateBoreLog': 'inowas.soilmodel.create_borelog.handler'
                         'Inowas\Soilmodel\Model\Command\DeleteBoreLog': 'inowas.soilmodel.delete_borelog.handler'
                         'Inowas\Soilmodel\Model\Command\UpdateGeologicalLayerProperty': 'inowas.soilmodel.update_geological_layer_property.handler'
-
-                        # ToolInstanceAggregate Commands and CommandHandlers
-                        'Inowas\Tool\Model\Command\CreateToolInstance': 'inowas.soilmodel.create_tool_instance.handler'
-                        'Inowas\Tool\Model\Command\DeleteToolInstance': 'inowas.soilmodel.delete_tool_instance.handler'
-                        'Inowas\Tool\Model\Command\UpdateToolInstance': 'inowas.soilmodel.update_tool_instance.handler'
 
         event_buses:
             modflow_event_bus:
@@ -182,10 +176,6 @@ parameters:
                             - 'inowas.modflowmodel.blackhole_projector'
                             - 'inowas.modflowmodel.modflow_packages_process_manager'
 
-                        'Inowas\ModflowModel\Model\Event\ModflowPackageWasUpdated':
-                            - 'inowas.modflowmodel.blackhole_projector'
-                            - 'inowas.modflowmodel.modflow_packages_process_manager'
-
                         'Inowas\ModflowModel\Model\Event\NameWasChanged':
                             - 'inowas.modflowmodel.blackhole_projector'
                             - 'inowas.modflowmodel.model_projector'
@@ -263,22 +253,6 @@ parameters:
 
                         'Inowas\Soilmodel\Model\Event\LayerPropertyWasUpdated':
                             - 'inowas.soilmodel.layer_values_projector'
-
-                        # ToolInstance
-                        'Inowas\Tool\Model\Event\ToolInstanceDataWasUpdated':
-                            - 'inowas.tool.tools_projector'
-
-                        'Inowas\Tool\Model\Event\ToolInstanceDescriptionWasUpdated':
-                            - 'inowas.tool.tools_projector'
-
-                        'Inowas\Tool\Model\Event\ToolInstanceNameWasUpdated':
-                            - 'inowas.tool.tools_projector'
-
-                        'Inowas\Tool\Model\Event\ToolInstanceWasCreated':
-                            - 'inowas.tool.tools_projector'
-
-                        'Inowas\Tool\Model\Event\ToolInstanceWasDeleted':
-                            - 'inowas.tool.tools_projector'
 
             modflow_replay_event_bus:
                 enable_handler_location: true
@@ -428,22 +402,6 @@ parameters:
 
                         'Inowas\Soilmodel\Model\Event\LayerPropertyWasUpdated':
                             - 'inowas.soilmodel.layer_values_projector'
-
-                        # ToolInstance
-                        'Inowas\Tool\Model\Event\ToolInstanceDataWasUpdated':
-                            - 'inowas.tool.tools_projector'
-
-                        'Inowas\Tool\Model\Event\ToolInstanceDescriptionWasUpdated':
-                            - 'inowas.tool.tools_projector'
-
-                        'Inowas\Tool\Model\Event\ToolInstanceNameWasUpdated':
-                            - 'inowas.tool.tools_projector'
-
-                        'Inowas\Tool\Model\Event\ToolInstanceWasCreated':
-                            - 'inowas.tool.tools_projector'
-
-                        'Inowas\Tool\Model\Event\ToolInstanceWasDeleted':
-                            - 'inowas.tool.tools_projector'
 
 services:
     prooph_service_bus.modflow_command_bus:

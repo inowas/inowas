@@ -55,8 +55,6 @@ class UserController extends InowasRestController
             throw new HttpException(401, 'Credentials are not valid.');
         }
 
-        $this->get('logger')->addInfo(sprintf('User with username %s has requested API-Key', $username));
-
         $data = [];
         $data['api_key'] = $user->getApiKey();
 

@@ -11,10 +11,11 @@ use Inowas\Common\Modflow\Nrchop;
 use Inowas\Common\Modflow\Rech;
 use Inowas\Common\Modflow\Unitnumber;
 
-class RchPackage extends AbstractPackage
+class RchPackage implements PackageInterface
 {
-    const TYPE = 'rch';
-    const DESCRIPTION = 'Recharge Package';
+
+    /** @var string  */
+    protected $type = 'rch';
 
     /** @var  Ipakcb */
     protected $ipakcb;
@@ -136,6 +137,11 @@ class RchPackage extends AbstractPackage
         $package = self::fromArray($this->toArray());
         $package->unitnumber = $unitnumber;
         return $package;
+    }
+
+    public function type(): string
+    {
+        return $this->type;
     }
 
     public function isValid(): bool

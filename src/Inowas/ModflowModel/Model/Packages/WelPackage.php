@@ -9,10 +9,11 @@ use Inowas\Common\Modflow\Ipakcb;
 use Inowas\Common\Modflow\Options;
 use Inowas\Common\Modflow\Unitnumber;
 
-class WelPackage extends AbstractPackage
+class WelPackage implements PackageInterface
 {
-    const TYPE = 'wel';
-    const DESCRIPTION = 'Well Package';
+
+    /** @var string  */
+    protected $type = 'wel';
 
     /** @var  Ipakcb */
     protected $ipakcb;
@@ -119,6 +120,11 @@ class WelPackage extends AbstractPackage
         $package = self::fromArray($this->toArray());
         $package->unitnumber = $unitnumber;
         return $package;
+    }
+
+    public function type(): string
+    {
+        return $this->type;
     }
 
     public function isValid(): bool

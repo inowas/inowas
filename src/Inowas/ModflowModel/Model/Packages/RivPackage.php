@@ -9,10 +9,11 @@ use Inowas\Common\Modflow\Ipakcb;
 use Inowas\Common\Modflow\Options;
 use Inowas\Common\Modflow\Unitnumber;
 
-class RivPackage extends AbstractPackage
+class RivPackage implements PackageInterface
 {
-    const TYPE = 'riv';
-    const DESCRIPTION = 'River Package';
+
+    /** @var string  */
+    protected $type = 'riv';
 
     /** @var  Ipakcb */
     protected $ipakcb;
@@ -118,6 +119,11 @@ class RivPackage extends AbstractPackage
         $package = self::fromArray($this->toArray());
         $package->unitnumber = $unitnumber;
         return $package;
+    }
+
+    public function type(): string
+    {
+        return $this->type;
     }
 
     public function isValid(): bool

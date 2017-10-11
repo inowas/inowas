@@ -9,10 +9,8 @@ use Inowas\Common\Modflow\Ipakcb;
 use Inowas\Common\Modflow\Options;
 use Inowas\Common\Modflow\Unitnumber;
 
-class GhbPackage extends AbstractPackage
+class GhbPackage implements PackageInterface
 {
-    const TYPE = 'ghb';
-    const DESCRIPTION = 'General-Head Boundary Package';
 
     /** @var string  */
     protected $type = 'ghb';
@@ -32,6 +30,7 @@ class GhbPackage extends AbstractPackage
     /** @var  Unitnumber */
     protected $unitnumber;
 
+
     public static function fromDefaults(): GhbPackage
     {
         $ipakcb = Ipakcb::fromInteger(0);
@@ -42,6 +41,7 @@ class GhbPackage extends AbstractPackage
 
         return new self($ipakcb, $stressPeriodData, $options, $extension, $unitnumber);
     }
+
 
     /** @noinspection MoreThanThreeArgumentsInspection
      * @param Ipakcb $ipakcb
@@ -121,6 +121,11 @@ class GhbPackage extends AbstractPackage
         $package = self::fromArray($this->toArray());
         $package->unitnumber = $unitnumber;
         return $package;
+    }
+
+    public function type(): string
+    {
+        return $this->type;
     }
 
     public function isValid(): bool

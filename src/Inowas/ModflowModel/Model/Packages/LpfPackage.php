@@ -29,10 +29,10 @@ use Inowas\Common\Modflow\Vkcb;
 use Inowas\Common\Modflow\Wetdry;
 use Inowas\Common\Modflow\Wetfct;
 
-class LpfPackage extends AbstractPackage
+class LpfPackage implements PackageInterface
 {
-    const TYPE = 'lpf';
-    const DESCRIPTION = 'Layer-Property Flow Package';
+    /** @var string  */
+    protected $type = 'lpf';
 
     /** @var  Laytyp */
     protected $laytyp;
@@ -245,6 +245,11 @@ class LpfPackage extends AbstractPackage
             $constantcv, $thickstrt, $nocvcorrection,
             $novfc, $extension, $unitnumber
         );
+    }
+
+    public function type(): string
+    {
+        return $this->type;
     }
 
     public function updateLaytyp(Laytyp $laytyp): LpfPackage

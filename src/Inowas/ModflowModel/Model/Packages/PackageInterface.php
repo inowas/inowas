@@ -10,6 +10,5 @@ interface PackageInterface extends \JsonSerializable
     public function toArray(): array;
     public function getEditables(): array;
     public function mergeEditables(array $arr): void;
-    public static function type(): string;
-    public static function description(): string;
+    public function type();
 }

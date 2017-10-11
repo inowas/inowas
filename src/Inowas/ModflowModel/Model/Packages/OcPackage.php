@@ -13,10 +13,11 @@ use Inowas\Common\Modflow\Iddnfm;
 use Inowas\Common\Modflow\Ihedfm;
 use Inowas\Common\Modflow\Unitnumber;
 
-class OcPackage extends AbstractPackage
+class OcPackage implements PackageInterface
 {
-    const TYPE = 'oc';
-    const DESCRIPTION = 'Output-Control Package';
+
+    /** @var string  */
+    protected $type = 'oc';
 
     /** @var  Ihedfm */
     protected $ihedfm;
@@ -181,6 +182,11 @@ class OcPackage extends AbstractPackage
         $package = self::fromArray($this->toArray());
         $package->unitnumber = $unitnumber;
         return $package;
+    }
+
+    public function type(): string
+    {
+        return $this->type;
     }
 
     public function isValid(): bool

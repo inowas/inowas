@@ -70,14 +70,11 @@ class Hanoi extends LoadScenarioBase
 {
     public function load(): void
     {
-        $userManager = $this->container->get('fos_user.user_manager');
-        $this->loadUsers($userManager);
+        $this->loadUsers($this->container->get('fos_user.user_manager'));
         $geoTools = $this->container->get('inowas.geotools.geotools_service');
+        #$this->createEventStreamTableIfNotExists('event_stream');
 
         $commandBus = $this->container->get('prooph_service_bus.modflow_command_bus');
-
-        $owner = $userManager->findUserByUsername('ralf.junghanns');
-        $this->ownerId = $owner->getId()->toString();
 
         $ownerId = UserId::fromString($this->ownerId);
         $modelId = ModflowId::generate();
@@ -392,8 +389,8 @@ class Hanoi extends LoadScenarioBase
             $scenarioId
         ));
 
-        $commandBus->dispatch(ChangeName::forModflowModel($ownerId, $scenarioId, Name::fromString('Scenario 1')));
-        $commandBus->dispatch(ChangeDescription::forModflowModel($ownerId, $scenarioId, Description::fromString('Simulation of MAR type river bank filtration')));
+        $commandBus->dispatch(ChangeName::forModflowModel($ownerId, $modelId, Name::fromString('Scenario 1')));
+        $commandBus->dispatch(ChangeDescription::forModflowModel($ownerId, $modelId, Description::fromString('Simulation of MAR type river bank filtration')));
 
         $boundariesFinder = $this->container->get('inowas.modflowmodel.boundary_manager');
         $rbfRelocatedWellNamesAndGeometry = array(
@@ -416,7 +413,6 @@ class Hanoi extends LoadScenarioBase
             if (array_key_exists($key, $rbfRelocatedWellNamesAndGeometry)) {
                 $geometry = Geometry::fromPoint($rbfRelocatedWellNamesAndGeometry[$key]);
                 $boundary = $boundary->updateGeometry($geometry);
-                $boundary->updateMetadata(Metadata::create()->addWellType(WellType::fromString(WellType::TYPE_RIVER_BANK_FILTRATION_WELL)));
                 echo sprintf("Move Well %s.\r\n", $boundary->name()->toString());
                 $commandBus->dispatch(UpdateBoundary::forModflowModel($ownerId, $scenarioId, $boundary->boundaryId(), $boundary));
             }
@@ -437,8 +433,8 @@ class Hanoi extends LoadScenarioBase
             $scenarioId
         ));
 
-        $commandBus->dispatch(ChangeName::forModflowModel($ownerId, $scenarioId, Name::fromString('Scenario 2')));
-        $commandBus->dispatch(ChangeDescription::forModflowModel($ownerId, $scenarioId, Description::fromString('Simulation of MAR type injection wells')));
+        $commandBus->dispatch(ChangeName::forModflowModel($ownerId, $modelId, Name::fromString('Scenario 2')));
+        $commandBus->dispatch(ChangeDescription::forModflowModel($ownerId, $modelId, Description::fromString('Simulation of MAR type injection wells')));
 
         # THIS WELLS ARE THE YELLOW DOTS IN THE RIGHT IMAGE
         $header = array('name', 'x', 'y', 'srid', 'pumpingrate');
@@ -485,8 +481,8 @@ class Hanoi extends LoadScenarioBase
             $scenarioId
         ));
 
-        $commandBus->dispatch(ChangeName::forModflowModel($ownerId, $scenarioId, Name::fromString('Scenario 3')));
-        $commandBus->dispatch(ChangeDescription::forModflowModel($ownerId, $scenarioId, Description::fromString('Combination of MAR types river bank filtration and injection wells')));
+        $commandBus->dispatch(ChangeName::forModflowModel($ownerId, $modelId, Name::fromString('Scenario 3')));
+        $commandBus->dispatch(ChangeDescription::forModflowModel($ownerId, $modelId, Description::fromString('Combination of MAR types river bank filtration and injection wells')));
 
         $boundariesFinder = $this->container->get('inowas.modflowmodel.boundary_manager');
         $rbfRelocatedWellNamesAndGeometry = array(
@@ -508,7 +504,6 @@ class Hanoi extends LoadScenarioBase
             if (array_key_exists($key, $rbfRelocatedWellNamesAndGeometry)) {
                 $geometry = Geometry::fromPoint($rbfRelocatedWellNamesAndGeometry[$key]);
                 $boundary = $boundary->updateGeometry($geometry);
-                $boundary->updateMetadata(Metadata::create()->addWellType(WellType::fromString(WellType::TYPE_RIVER_BANK_FILTRATION_WELL)));
                 echo sprintf("Move Well %s.\r\n", $boundary->name()->toString());
                 $commandBus->dispatch(UpdateBoundary::forModflowModel($ownerId, $scenarioId, $boundary->boundaryId(), $boundary));
             }

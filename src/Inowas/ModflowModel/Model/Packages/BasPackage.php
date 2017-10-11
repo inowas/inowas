@@ -13,11 +13,11 @@ use Inowas\Common\Modflow\Stoper;
 use Inowas\Common\Modflow\Strt;
 use Inowas\Common\Modflow\Unitnumber;
 
-class BasPackage extends AbstractPackage
+class BasPackage implements PackageInterface
 {
 
-    const TYPE = 'bas';
-    const DESCRIPTION = 'Basic Package';
+    /** @var string  */
+    protected $type = 'bas';
 
     /** @var  Ibound */
     protected $ibound;
@@ -114,6 +114,11 @@ class BasPackage extends AbstractPackage
         $self->unitnumber = Unitnumber::fromValue($arr['unitnumber']);
 
         return $self;
+    }
+
+    public function type(): string
+    {
+        return $this->type;
     }
 
     public function iBound(): Ibound

@@ -36,48 +36,36 @@ use Inowas\ModflowModel\Model\Packages\WelPackage;
 class ModflowPackages implements \JsonSerializable
 {
     /** @var array */
-    private $availablePackages;
-
-    /** @var array */
-    private $generalPackages = [
-        'available' => [
-            'mf' => MfPackage::class,
-            'bas' => BasPackage::class,
-            'dis' => DisPackage::class,
-            'oc' => OcPackage::class
-        ],
-        'selected' => ['mf', 'bas', 'dis', 'oc']
+    private $availablePackages = [
+        'mf' => MfPackage::class,
+        'bas' => BasPackage::class,
+        'dis' => DisPackage::class,
+        'lpf' => LpfPackage::class,
+        'pcg' => PcgPackage::class,
+        'nwt' => NwtPackage::class,
+        'oc' => OcPackage::class,
+        'chd' => ChdPackage::class,
+        'ghb' => GhbPackage::class,
+        'rch' => RchPackage::class,
+        'riv' => RivPackage::class,
+        'upw' => UpwPackage::class,
+        'wel' => WelPackage::class
     ];
 
     /** @var array */
-    private $boundaryPackages = [
-        'available' => [
-            'chd' => ChdPackage::class,
-            'ghb' => GhbPackage::class,
-            'rch' => RchPackage::class,
-            'riv' => RivPackage::class,
-            'wel' => WelPackage::class
-        ],
-        'selected' => []
+    private $availableFlowPackages = [
+        'lpf' => LpfPackage::class,
+        'upw' => UpwPackage::class
     ];
 
     /** @var array */
-    private $flowPackages = [
-        'available' => [
-            'lpf' => LpfPackage::class,
-            'upw' => UpwPackage::class
-        ],
-        'selected' => 'lpf'
+    private $availableSolverPackages = [
+        'pcg' => PcgPackage::class,
+        'nwt' => NwtPackage::class
     ];
 
     /** @var array */
-    private $solverPackages = [
-        'available' => [
-            'pcg' => PcgPackage::class,
-            'nwt' => NwtPackage::class
-        ],
-        'selected' => 'pcg'
-    ];
+    private $selectedPackages;
 
     /** @var array */
     private $packages = [];
@@ -87,9 +75,10 @@ class ModflowPackages implements \JsonSerializable
     public static function createFromDefaults(): ModflowPackages
     {
         $self = new self();
-        foreach ($self->selectedPackages() as $packageName){
+        $self->selectedPackages = ['mf', 'dis', 'bas', 'lpf', 'pcg', 'oc'];
+        foreach ($self->selectedPackages as $packageName){
             $class = $self->availablePackages[$packageName];
-            $self->setPackage($class::fromDefaults());
+            $self->addPackage($class::fromDefaults());
         }
         return $self;
     }
@@ -97,24 +86,20 @@ class ModflowPackages implements \JsonSerializable
     public static function fromArray(array $arr): ModflowPackages
     {
         $self = new self();
-
-        /** @var array $selectedPackages */
-        $selectedPackages = $arr['selected_packages'];
-        $self->setSelectedPackages($selectedPackages);
-
-        foreach ($self->selectedPackages() as $package){
-            if (array_key_exists($package, $self->availablePackages)){
-                $class = $self->availablePackages[$package];
-                $self->setPackage($class::fromArray($arr['packages'][$package]));
+        $self->selectedPackages = $arr['selected_packages'];
+        if (is_array($self->selectedPackages)) {
+            foreach ($self->selectedPackages as $package){
+                if (array_key_exists($package, $self->availablePackages)){
+                    $class = $self->availablePackages[$package];
+                    $self->addPackage($class::fromArray($arr['packages'][$package]));
+                }
             }
         }
 
         return $self;
     }
 
-    private function __construct(){
-        $this->getAvailablePackages();
-    }
+    private function __construct(){}
 
     public function updateModelName(Name $name): void
     {
@@ -240,36 +225,38 @@ class ModflowPackages implements \JsonSerializable
 
     public function getPackage(string $packageName): PackageInterface
     {
+        if (! array_key_exists($packageName, $this->availablePackages)){
+            throw InvalidPackageNameException::withName($packageName, $this->availablePackages);
+        }
+
         return $this->getPackageByName($packageName);
     }
 
     public function flowPackageName(): string
     {
-        return $this->flowPackages['selected'];
+        return $this->selectedPackages[3];
     }
 
     public function solverPackageName(): string
     {
-        return $this->solverPackages['selected'];
+        return $this->selectedPackages[4];
     }
 
     public function changeFlowPackage(PackageName $name): void
     {
         $packageName = $name->toString();
         if (! $this->flowPackageIsAvailable($packageName)){
-            throw InvalidPackageNameException::withName($packageName, $this->flowPackages['available']);
+            throw InvalidPackageNameException::withName($packageName, $this->availableFlowPackages);
         }
 
         if ($this->flowPackageName() === $packageName) {
             return;
         }
 
-        if (! array_key_exists($packageName, $this->packages)) {
-            $class = $this->availablePackages[$packageName];
-            $this->setPackage($class::fromDefaults());
-        }
-
-        $this->flowPackages['selected'] = $packageName;
+        $this->removePackageByName($this->flowPackageName());
+        $class = $this->availablePackages[$packageName];
+        $this->addPackage($class::fromDefaults());
+        $this->selectedPackages[3] = $packageName;
 
         if ($packageName === 'upw'){
             $this->updateExecutableName(ExecutableName::fromString('mfnwt'));
@@ -290,61 +277,27 @@ class ModflowPackages implements \JsonSerializable
     {
         $packageName = $name->toString();
         if (! $this->solverPackageIsAvailable($packageName)){
-            throw InvalidPackageNameException::withName($packageName, $this->solverPackages['available']);
+            throw InvalidPackageNameException::withName($packageName, $this->availableFlowPackages);
         }
 
         if ($this->solverPackageName() === $packageName) {
             return;
         }
 
-        if (! array_key_exists($packageName, $this->packages)) {
-            $class = $this->availablePackages[$packageName];
-            $this->setPackage($class::fromDefaults());
-        }
-
-        $this->solverPackages['selected'] = $packageName;
-    }
-
-    public function metaData(): array
-    {
-        $metadata = [];
-        $metadata['general'] = $this->generalPackages;
-        $metadata['boundary'] = $this->boundaryPackages;
-        $metadata['flow'] = $this->flowPackages;
-        $metadata['solver'] = $this->solverPackages;
-
-        foreach ($metadata as $category => $packages) {
-
-            if (!array_key_exists('available', $packages)) {
-                continue;
-            }
-
-            /** @var array $availablePackages */
-            $availablePackages = $packages['available'];
-
-            /** @var PackageInterface $package */
-            foreach ($availablePackages as $name => $package) {
-                $metadata[$category]['available'][$name] = $package::description();
-            }
-        }
-
-        return $metadata;
+        $this->removePackageByName($this->solverPackageName());
+        $class = $this->availablePackages[$packageName];
+        $this->addPackage($class::fromDefaults());
+        $this->selectedPackages[4] = $packageName;
     }
 
     public function packageData(): array
     {
         $packageData = [];
-        $packageData['selected_packages'] = $this->selectedPackages();
+        $packageData['selected_packages'] = $this->selectedPackages;
         $packageData['version'] = $this->flopyVersion;
 
         $packages = [];
-        foreach ($this->selectedPackages() as $selectedPackage) {
-
-            if (! array_key_exists($selectedPackage, $this->packages)) {
-                $class = $this->availablePackages[$selectedPackage];
-                $this->setPackage($class::fromDefaults());
-            }
-
+        foreach ($this->selectedPackages as $selectedPackage) {
             /** @var PackageInterface $package */
             $package = $this->packages[$selectedPackage];
             if ($package->isValid()) {
@@ -361,100 +314,31 @@ class ModflowPackages implements \JsonSerializable
         return $this->packageIsSelected($name->toString());
     }
 
-    public function unSelectBoundaryPackage(PackageName $name): void
+    public function unSelectPackage(PackageName $name): void
     {
-        $selectedBoundaryPackages = $this->boundaryPackages['selected'];
-
-        if(($key = array_search($name->toString(), $selectedBoundaryPackages, false)) !== false) {
-            unset($selectedBoundaryPackages[$key]);
-            $selectedBoundaryPackages = array_values($selectedBoundaryPackages);
+        if(($key = array_search($name->toString(), $this->selectedPackages, false)) !== false) {
+            unset($this->selectedPackages[$key]);
+            $this->selectedPackages = array_values($this->selectedPackages);
         }
-
-        $this->boundaryPackages['selected'] = $selectedBoundaryPackages;
     }
 
     public function mergePackageData(PackageName $name, array $data): void
-    {
-        $package = $this->getPackage($name->toString());
-        $package->mergeEditables($data);
-        $this->updatePackage($package);
-    }
-
-    private function getAvailablePackages() {
-        if (null === $this->availablePackages) {
-            $this->availablePackages = array_merge(
-                $this->generalPackages['available'],
-                $this->boundaryPackages['available'],
-                $this->flowPackages['available'],
-                $this->solverPackages['available']
-            );
-        }
-
-        return $this->availablePackages;
-    }
-
-    private function selectedPackages(): array
-    {
-        return array_merge(
-            $this->generalPackages['selected'],
-            $this->boundaryPackages['selected'],
-            [$this->flowPackages['selected']],
-            [$this->solverPackages['selected']]
-        );
-    }
-
-    private function setSelectedPackages(array $selectedPackages): void
-    {
-        $this->generalPackages['selected'] = [];
-        $this->boundaryPackages['selected'] = [];
-        $this->flowPackages['selected'] = [];
-        $this->solverPackages['selected'] = [];
-
-        foreach ($selectedPackages as $selectedPackage) {
-            $this->setSelectedPackage($selectedPackage);
-        }
-    }
-
-    private function setSelectedPackage(string $packageName): void {
-        if (
-            array_key_exists($packageName, $this->generalPackages['available']) &&
-            !in_array($packageName, $this->generalPackages['selected'], true)
-        ) {
-            $this->generalPackages['selected'][] = $packageName;
-        }
-
-        if (
-            array_key_exists($packageName, $this->boundaryPackages['available']) &&
-            !in_array($packageName, $this->boundaryPackages['selected'], true)
-        ) {
-            $this->boundaryPackages['selected'][] = $packageName;
-        }
-
-        if (array_key_exists($packageName, $this->flowPackages['available'])) {
-            $this->flowPackages['selected'] = $packageName;
-        }
-
-        if (array_key_exists($packageName, $this->solverPackages['available'])) {
-            $this->solverPackages['selected'] = $packageName;
-        }
-    }
+    {}
 
     private function addPackage(PackageInterface $package): void
     {
         $this->packages[$package->type()] = $package;
-        $this->setSelectedPackage($package->type());
     }
 
-    private function setPackage(PackageInterface $package): void
+    private function removePackageByName(string $packageName): void
     {
-        $this->packages[$package->type()] = $package;
-        $this->setSelectedPackage($package->type());
+        $package = $this->getPackageByName($packageName);
+        unset($this->packages[$package->type()]);
     }
 
     private function updatePackage(PackageInterface $package): void
     {
         $this->packages[$package->type()] = $package;
-        $this->setSelectedPackage($package->type());
     }
 
     private function addPackageByName(string $packageName): void
@@ -465,6 +349,7 @@ class ModflowPackages implements \JsonSerializable
 
         $class = $this->availablePackages[$packageName];
         $this->addPackage($class::fromDefaults());
+        $this->selectedPackages[] = $packageName;
     }
 
     private function getPackageByName(string $packageName): PackageInterface
@@ -475,7 +360,7 @@ class ModflowPackages implements \JsonSerializable
 
         if (! array_key_exists($packageName, $this->packages)) {
             $class = $this->availablePackages[$packageName];
-            $this->addPackage($class::fromDefaults());
+            return $class::fromDefaults();
         }
 
         return $this->packages[$packageName];
@@ -483,7 +368,7 @@ class ModflowPackages implements \JsonSerializable
 
     private function packageIsSelected(string $packageName): bool
     {
-        return in_array($packageName, $this->selectedPackages(), false);
+        return in_array($packageName, $this->selectedPackages, false);
     }
 
     private function packageIsAvailable(string $packageName): bool
@@ -493,12 +378,12 @@ class ModflowPackages implements \JsonSerializable
 
     private function flowPackageIsAvailable(string $packageName): bool
     {
-        return array_key_exists($packageName, $this->flowPackages['available']);
+        return array_key_exists($packageName, $this->availableFlowPackages);
     }
 
     private function solverPackageIsAvailable(string $packageName): bool
     {
-        return array_key_exists($packageName, $this->solverPackages['available']);
+        return array_key_exists($packageName, $this->availableSolverPackages);
     }
 
     public function hash(): string
