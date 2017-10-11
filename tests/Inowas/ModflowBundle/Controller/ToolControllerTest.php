@@ -8,11 +8,17 @@ use FOS\UserBundle\Doctrine\UserManager;
 use Inowas\AppBundle\Model\User;
 use Inowas\Common\Id\ModflowId;
 use Inowas\Common\Id\UserId;
+use Inowas\Common\Modflow\Description;
+use Inowas\Common\Modflow\Name;
 use Inowas\Common\Status\Visibility;
 use Inowas\ScenarioAnalysis\Model\Command\CreateScenarioAnalysis;
 use Inowas\ScenarioAnalysis\Model\ScenarioAnalysisDescription;
 use Inowas\ScenarioAnalysis\Model\ScenarioAnalysisId;
 use Inowas\ScenarioAnalysis\Model\ScenarioAnalysisName;
+use Inowas\Tool\Model\Command\CreateToolInstance;
+use Inowas\Tool\Model\ToolData;
+use Inowas\Tool\Model\ToolId;
+use Inowas\Tool\Model\ToolType;
 use Tests\Inowas\ModflowBundle\EventSourcingBaseTest;
 
 class ToolControllerTest extends EventSourcingBaseTest
@@ -69,6 +75,66 @@ class ToolControllerTest extends EventSourcingBaseTest
     /**
      * @test
      */
+    public function it_adds_a_simple_tool_to_tools_section(): void
+    {
+        $userId = UserId::fromString($this->user->getId()->toString());
+        $apiKey = $this->user->getApiKey();
+        $toolId = ToolId::generate();
+        $toolType = ToolType::fromString('T02');
+        $name = Name::fromString('ToolName');
+        $description = Description::fromString('ToolDescription');
+        $data = ToolData::fromArray([1,3,5, 'test' => '1, 3, 5']);
+
+        $this->commandBus->dispatch(CreateToolInstance::newWithAllParams($userId, $toolId, $toolType, $name, $description, $data));
+
+        $client = static::createClient();
+        $client->request(
+            'GET',
+            '/v2/tools/'.$toolType->toString(),
+            array(),
+            array(),
+            array('HTTP_X-AUTH-TOKEN' => $apiKey)
+        );
+
+        $response = $client->getResponse();
+        $this->assertEquals(200, $response->getStatusCode());
+        $body = json_decode($response->getContent(), true);
+        $this->assertTrue(is_array($body));
+        $this->assertCount(1, $body);
+
+        $client->request(
+            'GET',
+            '/v2/tools/'.$toolType->toString().'?public=true',
+            array(),
+            array(),
+            array('HTTP_X-AUTH-TOKEN' => $apiKey)
+        );
+
+        $response = $client->getResponse();
+        $this->assertEquals(200, $response->getStatusCode());
+        $body = json_decode($response->getContent(), true);
+        $this->assertTrue(is_array($body));
+        $this->assertCount(1, $body);
+
+        $client->request(
+            'GET',
+            sprintf('/v2/tools/%s/%s', $toolType->toString(), $toolId->toString()),
+            array(),
+            array(),
+            array('HTTP_X-AUTH-TOKEN' => $apiKey)
+        );
+
+        $response = $client->getResponse();
+        $this->assertEquals(200, $response->getStatusCode());
+        $arr = json_decode($response->getContent(), true);
+        $this->assertTrue(is_array($arr));
+        $this->assertArrayHasKey('id', $arr);
+        $this->assertArrayHasKey('data', $arr);
+    }
+
+    /**
+     * @test
+     */
     public function it_adds_a_modflow_model_to_tools_section(): void
     {
         $userId = UserId::fromString($this->user->getId()->toString());
@@ -93,7 +159,6 @@ class ToolControllerTest extends EventSourcingBaseTest
         $this->assertTrue(is_array($body));
         $this->assertCount(1, $body);
         $saDetails = $body[0];
-
 
         $this->assertTrue(array_key_exists('id', $saDetails));
         $this->assertEquals($modelId->toString(), $saDetails['id']);
@@ -222,7 +287,7 @@ class ToolControllerTest extends EventSourcingBaseTest
         $client = static::createClient();
         $client->request(
             'GET',
-            '/v2/tools/T07/public',
+            '/v2/tools/T07?public=true',
             array(),
             array(),
             array('HTTP_X-AUTH-TOKEN' => $apiKey)
@@ -250,37 +315,5 @@ class ToolControllerTest extends EventSourcingBaseTest
         $this->assertEquals($username, $saDetails['user_name']);
         $this->assertTrue(array_key_exists('created_at', $saDetails));
         $this->assertTrue(array_key_exists('public', $saDetails));
-    }
-
-    /**
-     * @test
-     */
-    public function it_clones_a_project_with_new_user(): void
-    {
-        $userId = UserId::fromString($this->user->getId()->toString());
-        $modelId = ModflowId::generate();
-        $this->createModelWithOneLayer($userId, $modelId);
-
-        $scenarioAnalysisId = ScenarioAnalysisId::generate();
-        $this->commandBus->dispatch(CreateScenarioAnalysis::byUserWithBaseModelNameAndDescription(
-            $scenarioAnalysisId,
-            $userId,
-            $modelId,
-            ScenarioAnalysisName::fromString('TestName'),
-            ScenarioAnalysisDescription::fromString('TestDescription'),
-            Visibility::public()
-        ));
-
-        $client = static::createClient();
-        $client->request(
-            'POST',
-            sprintf('/v2/tools/%s/clone', $scenarioAnalysisId->toString()),
-            array(),
-            array(),
-            array('HTTP_X-AUTH-TOKEN' => $this->anotherUser->getApiKey())
-        );
-
-        $response = $client->getResponse();
-        $this->assertEquals(302, $response->getStatusCode());
     }
 }

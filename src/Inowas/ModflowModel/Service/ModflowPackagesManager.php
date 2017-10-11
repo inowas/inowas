@@ -302,7 +302,7 @@ class ModflowPackagesManager
             $welStressPeriodData = $this->modflowModelManager->generateWelStressPeriodData($modelId, $stressPeriods);
             $packages->updatePackageParameter('wel', 'StressPeriodData', $welStressPeriodData);
         } else {
-            $packages->unSelectPackage(PackageName::fromString('wel'));
+            $packages->unSelectBoundaryPackage(PackageName::fromString('wel'));
         }
 
         /*
@@ -312,7 +312,7 @@ class ModflowPackagesManager
             $rchStressPeriodData = $this->modflowModelManager->generateRchStressPeriodData($modelId, $stressPeriods);
             $packages->updatePackageParameter('rch', 'StressPeriodData', $rchStressPeriodData);
         } else {
-            $packages->unSelectPackage(PackageName::fromString('rch'));
+            $packages->unSelectBoundaryPackage(PackageName::fromString('rch'));
         }
 
         /*
@@ -322,7 +322,7 @@ class ModflowPackagesManager
             $rivStressPeriodData = $this->modflowModelManager->generateRivStressPeriodData($modelId, $stressPeriods);
             $packages->updatePackageParameter('riv', 'StressPeriodData', $rivStressPeriodData);
         } else {
-            $packages->unSelectPackage(PackageName::fromString('riv'));
+            $packages->unSelectBoundaryPackage(PackageName::fromString('riv'));
         }
 
         /*
@@ -332,7 +332,7 @@ class ModflowPackagesManager
             $ghbStressPeriodData = $this->modflowModelManager->generateGhbStressPeriodData($modelId, $stressPeriods);
             $packages->updatePackageParameter('ghb', 'StressPeriodData', $ghbStressPeriodData);
         } else {
-            $packages->unSelectPackage(PackageName::fromString('ghb'));
+            $packages->unSelectBoundaryPackage(PackageName::fromString('ghb'));
         }
 
         /*
@@ -342,7 +342,7 @@ class ModflowPackagesManager
             $chdStressPeriodData = $this->modflowModelManager->generateChdStressPeriodData($modelId, $stressPeriods);
             $packages->updatePackageParameter('chd', 'StressPeriodData', $chdStressPeriodData);
         } else {
-            $packages->unSelectPackage(PackageName::fromString('chd'));
+            $packages->unSelectBoundaryPackage(PackageName::fromString('chd'));
         }
 
         return $packages;

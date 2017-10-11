@@ -304,4 +304,78 @@ class ModflowModelControllerTest extends EventSourcingBaseTest
         $validator = new Validator($content, $dereferencedSchema);
         $this->assertTrue($validator->passes(), var_export($validator->errors(), true));
     }
+
+    /**
+     * @test
+     */
+    public function it_returns_the_packages_metadata(): void
+    {
+        $userId = UserId::fromString($this->user->getId()->toString());
+        $apiKey = $this->user->getApiKey();
+
+        $modelId = ModflowId::generate();
+        $this->createModelWithOneLayer($userId, $modelId);
+
+        $client = static::createClient();
+        $client->request(
+            'GET',
+            sprintf('/v2/modflowmodels/%s/packages', $modelId->toString()),
+            array(),
+            array(),
+            array('HTTP_X-AUTH-TOKEN' => $apiKey)
+        );
+
+        $response = $client->getResponse();
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $json = $response->getContent();
+        $this->assertJson($json);
+        $arr = json_decode($json, true);
+
+        $this->assertArrayHasKey('general', $arr);
+        $this->assertArrayHasKey('boundary', $arr);
+        $this->assertArrayHasKey('flow', $arr);
+        $this->assertArrayHasKey('solver', $arr);
+    }
+
+    /**
+     * @test
+     */
+    public function it_returns_the_package_data(): void
+    {
+        $userId = UserId::fromString($this->user->getId()->toString());
+        $apiKey = $this->user->getApiKey();
+
+        $modelId = ModflowId::generate();
+        $this->createModelWithOneLayer($userId, $modelId);
+
+        $client = static::createClient();
+        $client->request(
+            'GET',
+            sprintf('/v2/modflowmodels/%s/packages/pcg', $modelId->toString()),
+            array(),
+            array(),
+            array('HTTP_X-AUTH-TOKEN' => $apiKey)
+        );
+
+        $response = $client->getResponse();
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $json = $response->getContent();
+        $this->assertJson($json);
+        $arr = json_decode($json, true);
+
+        $this->assertArrayHasKey('mxiter', $arr);
+        $this->assertArrayHasKey('iter1', $arr);
+        $this->assertArrayHasKey('npcond', $arr);
+        $this->assertArrayHasKey('hclose', $arr);
+        $this->assertArrayHasKey('rclose', $arr);
+        $this->assertArrayHasKey('relax', $arr);
+        $this->assertArrayHasKey('nbpol', $arr);
+        $this->assertArrayHasKey('iprpcg', $arr);
+        $this->assertArrayHasKey('mutpcg', $arr);
+        $this->assertArrayHasKey('damp', $arr);
+        $this->assertArrayHasKey('dampt', $arr);
+        $this->assertArrayHasKey('ihcofadd', $arr);
+    }
 }

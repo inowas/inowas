@@ -17,9 +17,8 @@ imports:
     - { resource: scenarioAnalysis/projections.yml }
     - { resource: scenarioAnalysis/services.yml }
 
-    #- { resource: soilmodel/commandHandler.yml }
-    #- { resource: soilmodel/projections.yml }
     - { resource: soilmodel/services.yml }
 
+    - { resource: tool/commandHandler.yml }
     - { resource: tool/projections.yml }
     - { resource: tool/services.yml }

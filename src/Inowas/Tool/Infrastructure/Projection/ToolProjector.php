@@ -24,6 +24,11 @@ use Inowas\ScenarioAnalysis\Model\Event\ScenarioAnalysisVisibilityWasChanged;
 use Inowas\ScenarioAnalysis\Model\Event\ScenarioAnalysisWasCloned;
 use Inowas\ScenarioAnalysis\Model\Event\ScenarioAnalysisWasCreated;
 use Inowas\ScenarioAnalysis\Model\Event\ScenarioAnalysisWasDeleted;
+use Inowas\Tool\Model\Event\ToolInstanceDataWasUpdated;
+use Inowas\Tool\Model\Event\ToolInstanceDescriptionWasUpdated;
+use Inowas\Tool\Model\Event\ToolInstanceNameWasUpdated;
+use Inowas\Tool\Model\Event\ToolInstanceWasCreated;
+use Inowas\Tool\Model\Event\ToolInstanceWasDeleted;
 
 class ToolProjector extends AbstractDoctrineConnectionProjector
 {
@@ -54,10 +59,55 @@ class ToolProjector extends AbstractDoctrineConnectionProjector
         $table->addColumn('user_id', 'string', ['length' => 36]);
         $table->addColumn('user_name', 'string', ['length' => 255]);
         $table->addColumn('public', 'smallint', ['default' => 1]);
+        $table->addColumn('data', 'text', ['default' => '[]']);
         $table->setPrimaryKey(['id']);
         $table->addIndex(['tool']);
         $table->addIndex(['user_id']);
         $this->addSchema($schema);
+    }
+
+    public function onToolInstanceDataWasUpdated(ToolInstanceDataWasUpdated $event): void
+    {
+        $this->connection->update(Table::TOOL_LIST,
+            ['data' => json_encode($event->data()->toArray())],
+            ['id' => $event->id()->toString()]
+        );
+    }
+
+    public function onToolInstanceDescriptionWasUpdated(ToolInstanceDescriptionWasUpdated $event): void
+    {
+        $this->connection->update(Table::TOOL_LIST,
+            ['description' => $event->description()->toString()],
+            ['id' => $event->id()->toString()]
+        );
+    }
+
+    public function onToolInstanceNameWasUpdated(ToolInstanceNameWasUpdated $event): void
+    {
+        $this->connection->update(Table::TOOL_LIST,
+            ['name' => $event->name()->toString()],
+            ['id' => $event->id()->toString()]
+        );
+    }
+
+    public function onToolInstanceWasCreated(ToolInstanceWasCreated $event): void
+    {
+        $this->connection->insert(Table::TOOL_LIST, array(
+            'id' => $event->id()->toString(),
+            'application' => '',
+            'project' => '',
+            'tool' => $event->type()->toString(),
+            'user_id' => $event->userId()->toString(),
+            'user_name' => $this->getUserNameByUserId($event->userId()),
+            'created_at' => date_format($event->createdAt(), DATE_ATOM)
+        ));
+    }
+
+    public function onToolInstanceWasDeleted(ToolInstanceWasDeleted $event): void
+    {
+        $this->connection->delete(Table::TOOL_LIST,
+            ['id' => $event->id()->toString()]
+        );
     }
 
     public function onModflowModelWasCreated(ModflowModelWasCreated $event): void

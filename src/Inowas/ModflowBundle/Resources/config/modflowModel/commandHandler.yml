@@ -128,6 +128,11 @@ services:
           - '@modflow_model_list'
           - '@inowas.modflowmodel.manager'
 
+    inowas.modflowmodel.update_modflow_package_handler:
+        class: Inowas\ModflowModel\Model\Handler\UpdateModflowPackageHandler
+        arguments:
+          - '@modflow_model_list'
+
     inowas.modflowmodel.update_modflow_package_parameter_handler:
         class: Inowas\ModflowModel\Model\Handler\UpdateModflowPackageParameterHandler
         arguments:

@@ -51,7 +51,7 @@ class UpdateModflowPackage extends AbstractJsonSchemaCommand
 
     public function modelId(): ModflowId
     {
-        return ModflowId::fromString($this->payload['model_id']);
+        return ModflowId::fromString($this->payload['id']);
     }
 
     public function packageName(): PackageName

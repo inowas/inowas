@@ -30,7 +30,12 @@ class ModflowEventStoreTruncateCommand extends ContainerAwareCommand
         $config = $this->getContainer()->getParameter('prooph_event_store_repositories');
 
         foreach ($config as $repo) {
-            $this->getContainer()->get('prooph_event_store')->delete(new  StreamName($repo['stream_name']));
+
+            try {
+                $this->getContainer()->get('prooph_event_store')->delete(new  StreamName($repo['stream_name']));
+            }
+            catch (\Throwable $e){}
+
             $this->getContainer()->get('prooph_event_store')->create(
                 new Stream(new  StreamName($repo['stream_name']), new \ArrayIterator())
             );

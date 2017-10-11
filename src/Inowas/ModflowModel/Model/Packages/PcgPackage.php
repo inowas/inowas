@@ -19,10 +19,10 @@ use Inowas\Common\Modflow\Rclose;
 use Inowas\Common\Modflow\Relax;
 use Inowas\Common\Modflow\Unitnumber;
 
-class PcgPackage implements PackageInterface
+class PcgPackage extends AbstractPackage
 {
-    /** @var string  */
-    protected $type = 'pcg';
+    const TYPE = 'pcg';
+    const DESCRIPTION = 'Preconditioned Conjugate-Gradient Package';
 
     /** @var Mxiter  */
     protected $mxiter;
@@ -189,11 +189,6 @@ class PcgPackage implements PackageInterface
             $nbpol, $iprpcg, $mutpcg, $damp, $dampt, $ihcofadd,
             $extension, $unitnumber
         );
-    }
-
-    public function type(): string
-    {
-        return $this->type;
     }
 
     public function updateMxiter(Mxiter $mxiter): PcgPackage

@@ -24,6 +24,11 @@ parameters:
             aggregate_type: 'Inowas\Soilmodel\Model\BoreLogAggregate'
             aggregate_translator: 'prooph_event_sourcing.aggregate_translator'
             stream_name: 'bore_log_event_stream'
+        tool_instance_list:
+            repository_class: 'Inowas\Tool\Infrastructure\Repository\EventStoreToolInstanceList'
+            aggregate_type: 'Inowas\Tool\Model\ToolInstanceAggregate'
+            aggregate_translator: 'prooph_event_sourcing.aggregate_translator'
+            stream_name: 'tool_instance_event_stream'
 
 services:
     prooph_message_factory:
@@ -91,3 +96,10 @@ services:
         arguments:
           - '@service_container'
           - 'bore_log_list'
+
+    tool_instance_list:
+        class: Inowas\Tool\Infrastructure\Repository\EventStoreToolInstanceList
+        factory: [Inowas\ModflowBundle\Infrastructure\Container\AggregateRepositoryFactory, create]
+        arguments:
+          - '@service_container'
+          - 'tool_instance_list'

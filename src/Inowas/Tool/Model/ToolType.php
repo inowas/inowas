@@ -5,11 +5,14 @@ namespace Inowas\Tool\Model;
 final class ToolType
 {
 
+    const GW_MOUNDING = 'T02';
     const MODEL_SETUP = 'T03';
     const SCENARIOANALYSIS = 'T07';
 
     public static $availableTypes = array(
-        'T03', 'T07'
+        'T02',
+        'T03',
+        'T07'
     );
 
     /** @var  string */
@@ -37,7 +40,7 @@ final class ToolType
 
     public function sameAs($value): bool
     {
-        if (! $value instanceof ToolType){
+        if (! $value instanceof self){
             return false;
         }
 

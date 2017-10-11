@@ -39,10 +39,10 @@ use Inowas\Common\Modflow\Stoptol;
 use Inowas\Common\Modflow\Thickfact;
 use Inowas\Common\Modflow\Unitnumber;
 
-class NwtPackage implements PackageInterface
+class NwtPackage extends AbstractPackage
 {
-    /** @var string  */
-    protected $type = 'nwt';
+    const TYPE = 'nwt';
+    const DESCRIPTION = 'Newton Solver Package';
 
     /** @var Headtol */
     protected $headtol;
@@ -339,11 +339,6 @@ class NwtPackage implements PackageInterface
             $levfill, $stoptol, $msdr, $iacl, $norder, $level, $north, $iredsys, $rrctols, $idroptol, $epsrn,
             $hclosexmd, $mxiterxmd, $extension, $unitnumber
         );
-    }
-
-    public function type(): string
-    {
-        return $this->type;
     }
 
     public function updateHeadtol(Headtol $headtol): NwtPackage

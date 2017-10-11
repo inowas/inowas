@@ -21,8 +21,11 @@ use Inowas\Common\Modflow\Unitnumber;
 use Inowas\Common\Modflow\Vka;
 use Inowas\Common\Modflow\Vkcb;
 
-class UpwPackage implements PackageInterface
+class UpwPackage extends AbstractPackage
 {
+    const TYPE = 'upw';
+    const DESCRIPTION = 'Upstream Weighting Package';
+
     /** @var string  */
     protected $type = 'upw';
 
@@ -175,11 +178,6 @@ class UpwPackage implements PackageInterface
             $hk, $hani, $vka, $ss, $sy, $vkcb,
             $extension, $unitnumber
         );
-    }
-
-    public function type(): string
-    {
-        return $this->type;
     }
 
     public function updateLaytyp(Laytyp $laytyp): UpwPackage

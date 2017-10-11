@@ -140,7 +140,7 @@ class ActiveCells
         foreach ($this->layerData as $rowNumber => $row) {
             foreach ($row as $colNumber => $isActive) {
                 if ($isActive === 1 || $isActive === true) {
-                    $cells[] = [(int)$rowNumber, (int)$colNumber];
+                    $cells[] = [(int)$colNumber, (int)$rowNumber];
                 }
             }
         }

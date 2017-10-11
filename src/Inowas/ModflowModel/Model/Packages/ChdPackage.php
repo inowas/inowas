@@ -7,11 +7,10 @@ namespace Inowas\ModflowModel\Model\Packages;
 use Inowas\Common\Modflow\Extension;
 use Inowas\Common\Modflow\Unitnumber;
 
-class ChdPackage implements PackageInterface
+class ChdPackage extends AbstractPackage
 {
-
-    /** @var string  */
-    protected $type = 'chd';
+    const TYPE = 'chd';
+    const DESCRIPTION = 'Constant-Head Boundary / Time-Variant Specified-Head';
 
     /** @var  ChdStressPeriodData */
     protected $stressPeriodData;
@@ -21,7 +20,6 @@ class ChdPackage implements PackageInterface
 
     /** @var  Unitnumber */
     protected $unitnumber;
-
 
     public static function fromDefaults(): ChdPackage
     {
@@ -80,11 +78,6 @@ class ChdPackage implements PackageInterface
         $package = self::fromArray($this->toArray());
         $package->unitnumber = $unitnumber;
         return $package;
-    }
-
-    public function type(): string
-    {
-        return $this->type;
     }
 
     public function isValid(): bool

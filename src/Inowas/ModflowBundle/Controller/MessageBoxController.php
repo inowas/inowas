@@ -19,6 +19,7 @@ use Inowas\ModflowModel\Model\Command\RequestModflowModelCalculation;
 use Inowas\ModflowModel\Model\Command\UpdateBoundary;
 use Inowas\ModflowModel\Model\Command\UpdateLayer;
 use Inowas\ModflowModel\Model\Command\UpdateModflowModel;
+use Inowas\ModflowModel\Model\Command\UpdateModflowPackage;
 use Inowas\ModflowModel\Model\Command\UpdateStressPeriods;
 use Inowas\ScenarioAnalysis\Model\Command\CloneScenarioAnalysis;
 use Inowas\ScenarioAnalysis\Model\Command\CreateScenario;
@@ -54,6 +55,7 @@ class MessageBoxController extends InowasRestController
         'updateBoundary' => UpdateBoundary::class,
         'updateLayer' => UpdateLayer::class,
         'updateModflowModel' => UpdateModflowModel::class,
+        'updateModflowPackage' => UpdateModflowPackage::class,
         'updateScenarioAnalysis' => UpdateScenarioAnalysis::class,
         'updateStressPeriods' => UpdateStressPeriods::class,
     ];

@@ -14,11 +14,10 @@ use Inowas\Common\Modflow\Verbose;
 use Inowas\Common\Modflow\Name;
 use Inowas\Common\Modflow\Version;
 
-class MfPackage implements PackageInterface
+class MfPackage extends AbstractPackage
 {
-
-    /** @var string  */
-    protected $type = 'mf';
+    const TYPE = 'mf';
+    const DESCRIPTION = 'Modflow-General Package';
 
     /** @var  Name */
     protected $modelname;
@@ -57,7 +56,6 @@ class MfPackage implements PackageInterface
 
         return new self($name, $fileExtension, $version, $executableName, $listUnit, $modelWorkSpace, $externalPath, $verbose);
     }
-
 
     /** @noinspection MoreThanThreeArgumentsInspection
      * @param Name $name
@@ -117,11 +115,6 @@ class MfPackage implements PackageInterface
         $this->modelWorkSpace = $modelWorkSpace;
         $this->externalPath = $externalPath;
         $this->verbose = $verbose;
-    }
-
-    public function type(): string
-    {
-        return $this->type;
     }
 
     public function modelname(): Name

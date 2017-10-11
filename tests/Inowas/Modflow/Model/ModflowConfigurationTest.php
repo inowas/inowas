@@ -79,7 +79,7 @@ class ModflowConfigurationTest extends \PHPUnit_Framework_TestCase
         $packages = ModflowPackages::createFromDefaults();
         $packages->updatePackageParameter('wel', 'unitnumber', Unitnumber::fromValue(10));
         $this->assertTrue($packages->isSelected(PackageName::fromString('wel')));
-        $packages->unSelectPackage(PackageName::fromString('wel'));
+        $packages->unSelectBoundaryPackage(PackageName::fromString('wel'));
         $this->assertFalse($packages->isSelected(PackageName::fromString('wel')));
     }
 }

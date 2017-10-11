@@ -46,6 +46,7 @@ use Inowas\ModflowModel\Model\Event\LengthUnitWasUpdated;
 use Inowas\ModflowModel\Model\Event\ModflowModelWasCloned;
 use Inowas\ModflowModel\Model\Event\ModflowModelWasDeleted;
 use Inowas\ModflowModel\Model\Event\ModflowPackageParameterWasUpdated;
+use Inowas\ModflowModel\Model\Event\ModflowPackageWasUpdated;
 use Inowas\ModflowModel\Model\Event\NameWasChanged;
 use Inowas\ModflowModel\Model\Event\SoilmodelMetadataWasUpdated;
 use Inowas\ModflowModel\Model\Event\ModflowModelWasCreated;
@@ -340,6 +341,21 @@ class ModflowModelAggregate extends AggregateRoot
         ));
     }
 
+    /** @noinspection MoreThanThreeArgumentsInspection
+     * @param UserId $userId
+     * @param PackageName $packageName
+     * @param $data
+     */
+    public function updateModflowPackage(UserId $userId, PackageName $packageName, array $data): void
+    {
+        $this->recordThat(ModflowPackageWasUpdated::withProps(
+            $userId,
+            $this->modelId,
+            $packageName,
+            $data
+        ));
+    }
+
     public function updateStressPeriods(UserId $userId, StressPeriods $stressPeriods): void
     {
         $this->recordThat(StressPeriodsWereUpdated::of(
@@ -464,6 +480,9 @@ class ModflowModelAggregate extends AggregateRoot
     {}
 
     protected function whenModflowPackageParameterWasUpdated(ModflowPackageParameterWasUpdated $event): void
+    {}
+
+    protected function whenModflowPackageWasUpdated(ModflowPackageWasUpdated $event): void
     {}
 
     protected function whenNameWasChanged(NameWasChanged $event): void

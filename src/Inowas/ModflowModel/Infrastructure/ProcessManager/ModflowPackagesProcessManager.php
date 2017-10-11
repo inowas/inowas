@@ -8,6 +8,7 @@ use Inowas\ModflowModel\Model\Event\LengthUnitWasUpdated;
 use Inowas\ModflowModel\Model\Event\ModflowModelWasCloned;
 use Inowas\ModflowModel\Model\Event\ModflowModelWasCreated;
 use Inowas\ModflowModel\Model\Event\ModflowPackageParameterWasUpdated;
+use Inowas\ModflowModel\Model\Event\ModflowPackageWasUpdated;
 use Inowas\ModflowModel\Model\Event\StressPeriodsWereUpdated;
 use Inowas\ModflowModel\Model\Event\TimeUnitWasUpdated;
 use Inowas\ModflowModel\Service\ModflowPackagesManager;
@@ -77,6 +78,15 @@ class ModflowPackagesProcessManager
         $calculationId = $this->packagesManager->savePackages($packages);
         $this->commandBus->dispatch(UpdateCalculationId::withId($event->modelId(), $calculationId));
     }
+
+    public function onModflowPackageWasUpdated(ModflowPackageWasUpdated $event): void
+    {
+        $packages = $this->packagesManager->getPackagesByModelId($event->modelId());
+        $packages->mergePackageData($event->packageName(), $event->data());
+        $calculationId = $this->packagesManager->savePackages($packages);
+        $this->commandBus->dispatch(UpdateCalculationId::withId($event->modelId(), $calculationId));
+    }
+
     public function onEvent(DomainEvent $e): void
     {
         $handler = $this->determineEventMethodFor($e);

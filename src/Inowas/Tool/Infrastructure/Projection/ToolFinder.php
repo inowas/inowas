@@ -63,7 +63,7 @@ class ToolFinder
     public function findById(ToolId $id): ?array
     {
         $result = $this->connection->fetchAssoc(
-            sprintf('SELECT id, name, description, project, application, tool, created_at, user_id, user_name, created_at, public FROM %s WHERE id = :id', Table::TOOL_LIST),
+            sprintf('SELECT id, name, description, project, application, tool, created_at, user_id, user_name, created_at, public, data FROM %s WHERE id = :id', Table::TOOL_LIST),
             ['id' => $id->toString()]
         );
 
@@ -71,6 +71,22 @@ class ToolFinder
             return null;
         }
 
+        $result['data'] = json_decode($result['data'], true);
+        return $result;
+    }
+
+    public function findByUserIdTypeAndId(UserId $userId, ToolType $toolType, ToolId $id): ?array
+    {
+        $result = $this->connection->fetchAssoc(
+            sprintf('SELECT id, name, description, project, application, tool, created_at, user_id, user_name, created_at, public, data FROM %s WHERE id = :id', Table::TOOL_LIST),
+            ['id' => $id->toString(), 'user_id' => $userId->toString(), 'tool' => $toolType->toString()]
+        );
+
+        if ($result === false) {
+            return null;
+        }
+
+        $result['data'] = json_decode($result['data'], true);
         return $result;
     }
 

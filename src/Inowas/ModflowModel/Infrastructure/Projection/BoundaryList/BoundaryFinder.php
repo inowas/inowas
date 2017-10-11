@@ -110,8 +110,6 @@ class BoundaryFinder
         if ($row === false){
             return null;
         }
-        
-        $observationPointIds = json_decode($result['observation_point_ids']);
 
         return BoundaryFactory::createFromArray(json_decode($row['boundary'], true));
     }

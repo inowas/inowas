@@ -1,0 +1,13 @@
+services:
+    # ToolInstances CommandHandlers
+    inowas.soilmodel.create_tool_instance.handler:
+        class: Inowas\Tool\Model\Handler\CreateToolInstanceHandler
+        arguments: ['@tool_instance_list']
+
+    inowas.soilmodel.delete_tool_instance.handler:
+        class: Inowas\Tool\Model\Handler\DeleteToolInstanceHandler
+        arguments: ['@tool_instance_list']
+
+    inowas.soilmodel.update_tool_instance.handler:
+        class: Inowas\Tool\Model\Handler\UpdateToolInstanceHandler
+        arguments: ['@tool_instance_list']
