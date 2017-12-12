@@ -53,6 +53,7 @@ use Inowas\ModflowModel\Model\Event\ModflowModelWasCreated;
 use Inowas\ModflowModel\Model\Event\StressPeriodsWereUpdated;
 use Inowas\ModflowModel\Model\Event\TimeUnitWasUpdated;
 use Inowas\ModflowModel\Model\Event\VisibilityWasChanged;
+use Inowas\ModflowModel\Model\Exception\BoundaryAlreadyExistsInModelException;
 use Inowas\ModflowModel\Model\Exception\BoundaryNotFoundInModelException;
 use Prooph\EventSourcing\AggregateChanged;
 use Prooph\EventSourcing\AggregateRoot;
@@ -139,22 +140,16 @@ class ModflowModelAggregate extends AggregateRoot
 
     public function addBoundary(UserId $userId, ModflowBoundary $boundary): void
     {
-        if (in_array($boundary->boundaryId()->toString(), $this->boundaries, true)) {
-            throw BoundaryNotFoundInModelException::withIds($this->modelId, $boundary->boundaryId());
-        }
-
         $this->recordThat(BoundaryWasAdded::byUserToModel(
             $userId,
             $this->modelId,
             $boundary
         ));
-
-        $this->boundaries[] = $boundary->boundaryId()->toString();
     }
 
     public function removeBoundary(UserId $userId, BoundaryId $boundaryId): void
     {
-        if (in_array($boundaryId->toString(), $this->boundaries, true)){
+        if (in_array($boundaryId->toString(), $this->boundaries, true)) {
             $this->recordThat(BoundaryWasRemoved::byUserFromModel(
                 $userId,
                 $this->modelId,
@@ -170,7 +165,7 @@ class ModflowModelAggregate extends AggregateRoot
 
     public function updateBoundary(UserId $userId, BoundaryId $boundaryId, ModflowBoundary $boundary): void
     {
-        if (in_array($boundaryId->toString(), $this->boundaries, true)){
+        if (in_array($boundaryId->toString(), $this->boundaries, true)) {
             $this->recordThat(BoundaryWasUpdated::byUserToModel(
                 $userId,
                 $this->modelId,
@@ -318,7 +313,7 @@ class ModflowModelAggregate extends AggregateRoot
 
     public function preprocessingWasFinished(CalculationId $calculationId): void
     {
-        if ($this->calculationId->toString() !== $calculationId->toString()){
+        if ($this->calculationId->toString() !== $calculationId->toString()) {
             $this->calculationId = $calculationId;
             $this->recordThat(CalculationIdWasChanged::withId($this->modelId, $calculationId));
         }
@@ -407,10 +402,12 @@ class ModflowModelAggregate extends AggregateRoot
     }
 
     protected function whenActiveCellsWereUpdated(ActiveCellsWereUpdated $event): void
-    {}
+    {
+    }
 
     protected function whenAreaGeometryWasUpdated(AreaGeometryWasUpdated $event): void
-    {}
+    {
+    }
 
     protected function whenBoundaryWasAdded(BoundaryWasAdded $event): void
     {
@@ -418,7 +415,8 @@ class ModflowModelAggregate extends AggregateRoot
     }
 
     protected function whenBoundaryWasUpdated(BoundaryWasUpdated $event): void
-    {}
+    {
+    }
 
     protected function whenBoundaryWasRemoved(BoundaryWasRemoved $event): void
     {
@@ -426,7 +424,8 @@ class ModflowModelAggregate extends AggregateRoot
     }
 
     protected function whenBoundingBoxWasChanged(BoundingBoxWasChanged $event): void
-    {}
+    {
+    }
 
     protected function whenCalculationIdWasChanged(CalculationIdWasChanged $event): void
     {
@@ -434,31 +433,44 @@ class ModflowModelAggregate extends AggregateRoot
     }
 
     protected function whenCalculationWasRequested(CalculationWasRequested $event): void
-    {}
+    {
+    }
 
     protected function whenCalculationWasFinished(CalculationWasFinished $event): void
-    {}
+    {
+    }
 
     protected function whenCalculationWasStarted(CalculationWasStarted $event): void
-    {}
+    {
+    }
 
     protected function whenDescriptionWasChanged(DescriptionWasChanged $event): void
-    {}
+    {
+    }
 
     protected function whenFlowPackageWasChanged(FlowPackageWasChanged $event): void
-    {}
+    {
+    }
 
     protected function whenGridSizeWasChanged(GridSizeWasChanged $event): void
-    {}
+    {
+    }
 
-    protected function whenLayerWasAdded(LayerWasAdded $event): void {}
+    protected function whenLayerWasAdded(LayerWasAdded $event): void
+    {
+    }
 
-    protected function whenLayerWasRemoved(LayerWasRemoved $event): void {}
+    protected function whenLayerWasRemoved(LayerWasRemoved $event): void
+    {
+    }
 
-    protected function whenLayerWasUpdated(LayerWasUpdated $event): void {}
+    protected function whenLayerWasUpdated(LayerWasUpdated $event): void
+    {
+    }
 
     protected function whenLengthUnitWasUpdated(LengthUnitWasUpdated $event): void
-    {}
+    {
+    }
 
     protected function whenModflowModelWasCloned(ModflowModelWasCloned $event): void
     {
@@ -477,28 +489,36 @@ class ModflowModelAggregate extends AggregateRoot
     }
 
     protected function whenModflowModelWasDeleted(ModflowModelWasDeleted $event): void
-    {}
+    {
+    }
 
     protected function whenModflowPackageParameterWasUpdated(ModflowPackageParameterWasUpdated $event): void
-    {}
+    {
+    }
 
     protected function whenModflowPackageWasUpdated(ModflowPackageWasUpdated $event): void
-    {}
+    {
+    }
 
     protected function whenNameWasChanged(NameWasChanged $event): void
-    {}
+    {
+    }
 
     protected function whenSoilmodelMetadataWasUpdated(SoilmodelMetadataWasUpdated $event): void
-    {}
+    {
+    }
 
     protected function whenStressPeriodsWereUpdated(StressPeriodsWereUpdated $event): void
-    {}
+    {
+    }
 
     protected function whenTimeUnitWasUpdated(TimeUnitWasUpdated $event): void
-    {}
+    {
+    }
 
     protected function whenVisibilityWasChanged(VisibilityWasChanged $event): void
-    {}
+    {
+    }
 
     protected function aggregateId(): string
     {
@@ -508,7 +528,7 @@ class ModflowModelAggregate extends AggregateRoot
     protected function apply(AggregateChanged $e): void
     {
         $handler = $this->determineEventHandlerMethodFor($e);
-        if (! method_exists($this, $handler)) {
+        if (!method_exists($this, $handler)) {
             throw new \RuntimeException(sprintf(
                 'Missing event handler method %s for aggregate root %s',
                 $handler,
