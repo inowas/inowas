@@ -25,7 +25,7 @@ class BoundarySchemaTest extends BaseTestCase
      * @param string $type
      * @param bool $expected
      */
-    public function it_validates_well_type(string $type, bool $expected)
+    public function it_validates_well_type(string $type, bool $expected): void
     {
         $dereferencer = Dereferencer::draft4();
         $schema = $dereferencer->dereference('file://spec/schema/modflow/boundary/wellType.json');
@@ -50,7 +50,7 @@ class BoundarySchemaTest extends BaseTestCase
      * @param string $json
      * @param bool $expected
      */
-    public function it_validates_well(string $json, bool $expected)
+    public function it_validates_well(string $json, bool $expected): void
     {
         $jsonSchema = str_replace(
             'https://inowas.com/',
@@ -65,11 +65,16 @@ class BoundarySchemaTest extends BaseTestCase
         $this->assertSame($expected, $validator->passes(), var_export($validator->errors(), true));
     }
 
-    public function providerBoundary()
+    public function providerBoundary(): array
     {
         return [
             [
                 file_get_contents('spec/example/modflow/boundary/constantHeadBoundary.json'),
+                file_get_contents('spec/schema/modflow/boundary/constantHeadBoundary.json'),
+                true
+            ],
+            [
+                file_get_contents('spec/example/modflow/boundary/constantHeadBoundary2.json'),
                 file_get_contents('spec/schema/modflow/boundary/constantHeadBoundary.json'),
                 true
             ],
@@ -129,7 +134,7 @@ class BoundarySchemaTest extends BaseTestCase
      * @param string $schema
      * @param bool $expected
      */
-    public function it_validates_boundaries(string $json, string $schema, bool $expected)
+    public function it_validates_boundaries(string $json, string $schema, bool $expected): void
     {
         $dereferencer = Dereferencer::draft4();
         $dereferencer->getLoaderManager()->registerLoader('https', new UrlReplaceLoader());
@@ -139,5 +144,4 @@ class BoundarySchemaTest extends BaseTestCase
         $validator = new Validator(json_decode(json_encode($payload), false), $dereferencedSchema);
         $this->assertSame($expected, $validator->passes(), var_export($validator->errors(), true));
     }
-
 }

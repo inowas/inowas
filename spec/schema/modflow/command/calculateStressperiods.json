@@ -20,7 +20,6 @@
     },
     "additionalProperties": false,
     "required": [
-        "uuid",
         "message_name",
         "metadata",
         "payload"

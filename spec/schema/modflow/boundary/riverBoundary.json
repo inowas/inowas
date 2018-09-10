@@ -16,7 +16,7 @@
             "$ref": "geojson/linestring.json"
         },
         "type": {
-            "type": "String",
+            "type": "string",
             "pattern": "^riv$"
         },
         "affected_layers": {

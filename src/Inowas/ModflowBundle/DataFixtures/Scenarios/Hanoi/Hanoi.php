@@ -2,6 +2,8 @@
 
 namespace Inowas\ModflowBundle\DataFixtures\Scenarios\Hanoi;
 
+use Inowas\Common\Boundaries\HeadObservationWell;
+use Inowas\Common\Boundaries\HeadObservationWellDateTimeValue;
 use Inowas\Common\Boundaries\Metadata;
 use Inowas\Common\Boundaries\BoundaryType;
 use Inowas\Common\Boundaries\ConstantHeadBoundary;
@@ -28,6 +30,7 @@ use Inowas\Common\Modflow\LengthUnit;
 use Inowas\Common\Modflow\Description;
 use Inowas\Common\Modflow\ParameterName;
 use Inowas\Common\Modflow\Ss;
+use Inowas\Common\Modflow\StressPeriods;
 use Inowas\Common\Modflow\Sy;
 use Inowas\Common\Modflow\Top;
 use Inowas\Common\Modflow\Vka;
@@ -57,6 +60,7 @@ use Inowas\Common\Boundaries\WellBoundary;
 use Inowas\Common\Boundaries\WellType;
 use Inowas\Common\Boundaries\RiverBoundary;
 use Inowas\ModflowBundle\DataFixtures\Scenarios\LoadScenarioBase;
+use Inowas\ModflowModel\Model\Command\UpdateStressPeriods;
 use Inowas\ScenarioAnalysis\Model\Command\CreateScenario;
 use Inowas\ScenarioAnalysis\Model\Command\CreateScenarioAnalysis;
 use Inowas\ScenarioAnalysis\Model\ScenarioAnalysisDescription;
@@ -245,14 +249,14 @@ class Hanoi extends LoadScenarioBase
                 $boundaryName,
                 Geometry::fromPoint($geoTools->projectPoint(new Point($well['x'], $well['y'], $well['srid']), Srid::fromInt(4326))),
                 AffectedCells::create(),
-                AffectedLayers::createWithLayerNumber(LayerNumber::fromInt((int)$well['layer']-1)),
+                AffectedLayers::createWithLayerNumber(LayerNumber::fromInt((int)$well['layer'] - 1)),
                 Metadata::create()->addWellType(WellType::fromString($well['type']))
             );
 
             $value = null;
-            foreach ($dates as $date){
-                if (is_numeric($well[$date])){
-                    if ($well[$date] !== $value){
+            foreach ($dates as $date) {
+                if (is_numeric($well[$date])) {
+                    if ($well[$date] !== $value) {
                         $wellBoundary = $wellBoundary->addPumpingRate(WellDateTimeValue::fromParams(
                             DateTime::fromString(explode(':', $date)[1]), (float)$well[$date]
                         ));
@@ -261,7 +265,43 @@ class Hanoi extends LoadScenarioBase
                 }
             }
 
-            echo sprintf('Add Well %s to BaseModel'."\r\n", $boundaryName->toString());
+            echo sprintf('Add Well %s to BaseModel' . "\r\n", $boundaryName->toString());
+            $commandBus->dispatch(AddBoundary::forModflowModel($ownerId, $modelId, $wellBoundary));
+        }
+
+        /* Add Head-Observations for BaseScenario */
+        $fileName = __DIR__ . '/data/head_observation_wells_basecase.csv';
+        $wells = $this->loadRowsFromCsv($fileName);
+        $header = $this->loadHeaderFromCsv($fileName);
+        $dates = $this->getDates($header);
+
+        foreach ($wells as $key => $well) {
+            $boundaryName = Name::fromString($well['name']);
+            $point = $geoTools->getPointFromGridCell($boundingBox, $gridSize, (int)$well['row']-1, (int)$well['column']-1);
+
+            /** @var HeadObservationWell $wellBoundary */
+            $wellBoundary = HeadObservationWell::createWithParams(
+                $boundaryName,
+                Geometry::fromPoint($point),
+                AffectedCells::create(),
+                AffectedLayers::createWithLayerNumber(LayerNumber::fromInt((int)$well['layer']-1)),
+                Metadata::create()->addWellType(WellType::fromString('hob'))
+            );
+
+            $value = null;
+            foreach ($dates as $dateKey => $date) {
+                if ($dateKey === 0) {continue;}
+                if (is_numeric($well[$date])) {
+                    if ($well[$date] !== $value) {
+                        $wellBoundary = $wellBoundary->addHeadObservation(HeadObservationWellDateTimeValue::fromParams(
+                            DateTime::fromString(explode(':', $date)[1]), (float)$well[$date]
+                        ));
+                    }
+                    $value = $well[$date];
+                }
+            }
+
+            echo sprintf('Add Well %s to BaseModel' . "\r\n", $boundaryName->toString());
             $commandBus->dispatch(AddBoundary::forModflowModel($ownerId, $modelId, $wellBoundary));
         }
 
@@ -269,7 +309,7 @@ class Hanoi extends LoadScenarioBase
          * Add River for the baseScenario
          */
         $riverPoints = $this->loadRowsFromCsv(__DIR__ . '/data/river_geometry_basecase.csv');
-        foreach ($riverPoints as $key => $point){
+        foreach ($riverPoints as $key => $point) {
             $riverPoints[$key] = $geoTools->projectPoint(new Point($point['x'], $point['y'], $point['srid']), Srid::fromInt(4326));
         }
 
@@ -286,19 +326,19 @@ class Hanoi extends LoadScenarioBase
         $header = $this->loadHeaderFromCsv(__DIR__ . '/data/river_stages_basecase.csv');
         $dates = $this->getDates($header);
 
-        foreach ($observationPoints as $key => $op){
+        foreach ($observationPoints as $key => $op) {
             $observationPoint = ObservationPoint::fromIdTypeNameAndGeometry(
-                ObservationPointId::fromString('OP'.$key),
+                ObservationPointId::fromString('OP' . $key),
                 BoundaryType::fromString(BoundaryType::RIVER),
                 Name::fromString($op['name']),
                 $geoTools->projectPoint(new Point($op['x'], $op['y'], $op['srid']), Srid::fromInt(4326))
             );
 
-            foreach ($dates as $date){
+            foreach ($dates as $date) {
                 if (is_numeric($op[$date])) {
                     $observationPoint = $observationPoint->addDateTimeValue(
                         RiverDateTimeValue::fromParams(
-                        DateTime::fromString(explode(':', $date)[1]), $op[$date], 0, 1500)
+                            DateTime::fromString(explode(':', $date)[1]), $op[$date], 0, 1500)
                     );
                 }
             }
@@ -311,7 +351,7 @@ class Hanoi extends LoadScenarioBase
          * Add ConstantHead for the baseScenario
          */
         $chdPoints = $this->loadRowsFromCsv(__DIR__ . '/data/chd_geometry_basecase.csv');
-        foreach ($chdPoints as $key => $point){
+        foreach ($chdPoints as $key => $point) {
             $chdPoints[$key] = $geoTools->projectPoint(new Point($point['x'], $point['y'], $point['srid']), Srid::fromInt(4326));
         }
 
@@ -330,9 +370,9 @@ class Hanoi extends LoadScenarioBase
         $header = $this->loadHeaderFromCsv(__DIR__ . '/data/chd_stages_basecase.csv');
         $dates = $this->getDates($header);
 
-        foreach ($observationPoints as $key => $op){
+        foreach ($observationPoints as $key => $op) {
 
-            $observationPointId = ObservationPointId::fromString('OP'.$key);
+            $observationPointId = ObservationPointId::fromString('OP' . $key);
             $observationPoint = ObservationPoint::fromIdTypeNameAndGeometry(
                 $observationPointId,
                 BoundaryType::fromString(BoundaryType::CONSTANT_HEAD),
@@ -363,6 +403,12 @@ class Hanoi extends LoadScenarioBase
         $start = DateTime::fromString('2005-01-01');
         $end = DateTime::fromString('2007-12-31');
         $commandBus->dispatch(CalculateStressPeriods::forModflowModel($ownerId, $modelId, $start, $end));
+
+        /* Set Stressperiods and first Stressperiod to steady = false */
+        /** @var StressPeriods $stressPeriods */
+        $stressPeriods = $this->container->get('inowas.modflowmodel.manager')->getStressPeriodsByModelId($modelId);
+        $stressPeriods->setFirstStressPeriodSteady(true);
+        $commandBus->dispatch(UpdateStressPeriods::of($ownerId, $modelId, $stressPeriods));
 
         echo sprintf("Change FlowPackage.\r\n");
         $commandBus->dispatch(ChangeFlowPackage::forModflowModel($ownerId, $modelId, PackageName::fromString('upw')));
@@ -413,12 +459,12 @@ class Hanoi extends LoadScenarioBase
             'H10_6' => $geoTools->projectPoint(new Point(589150, 2326214, 32648), Srid::fromInt(4326)),
             'H11_8' => $geoTools->projectPoint(new Point(593446, 2321044, 32648), Srid::fromInt(4326)),
             'H19_6' => $geoTools->projectPoint(new Point(589050, 2326431, 32648), Srid::fromInt(4326)),
-            'H2_1'  => $geoTools->projectPoint(new Point(584451, 2331823, 32648), Srid::fromInt(4326)),
-            'H2_8'  => $geoTools->projectPoint(new Point(593249, 2321333, 32648), Srid::fromInt(4326)),
-            'H5_1'  => $geoTools->projectPoint(new Point(588440, 2327043, 32648), Srid::fromInt(4326)),
-            'H8_6'  => $geoTools->projectPoint(new Point(588829, 2326631, 32648), Srid::fromInt(4326)),
-            'H8_8'  => $geoTools->projectPoint(new Point(593443, 2321233, 32648), Srid::fromInt(4326)),
-            'H9_1'  => $geoTools->projectPoint(new Point(584649, 2331729, 32648), Srid::fromInt(4326))
+            'H2_1' => $geoTools->projectPoint(new Point(584451, 2331823, 32648), Srid::fromInt(4326)),
+            'H2_8' => $geoTools->projectPoint(new Point(593249, 2321333, 32648), Srid::fromInt(4326)),
+            'H5_1' => $geoTools->projectPoint(new Point(588440, 2327043, 32648), Srid::fromInt(4326)),
+            'H8_6' => $geoTools->projectPoint(new Point(588829, 2326631, 32648), Srid::fromInt(4326)),
+            'H8_8' => $geoTools->projectPoint(new Point(593443, 2321233, 32648), Srid::fromInt(4326)),
+            'H9_1' => $geoTools->projectPoint(new Point(584649, 2331729, 32648), Srid::fromInt(4326))
         );
 
         $boundaries = $boundariesFinder->findWellBoundaries($scenarioId);
@@ -508,12 +554,12 @@ class Hanoi extends LoadScenarioBase
             'H10_6' => $geoTools->projectPoint(new Point(589150, 2326214, 32648), Srid::fromInt(4326)),
             'H11_8' => $geoTools->projectPoint(new Point(593446, 2321044, 32648), Srid::fromInt(4326)),
             'H19_6' => $geoTools->projectPoint(new Point(589050, 2326431, 32648), Srid::fromInt(4326)),
-            'H2_1'  => $geoTools->projectPoint(new Point(584451, 2331823, 32648), Srid::fromInt(4326)),
-            'H2_8'  => $geoTools->projectPoint(new Point(593249, 2321333, 32648), Srid::fromInt(4326)),
-            'H5_1'  => $geoTools->projectPoint(new Point(588440, 2327043, 32648), Srid::fromInt(4326)),
-            'H8_6'  => $geoTools->projectPoint(new Point(588829, 2326631, 32648), Srid::fromInt(4326)),
-            'H8_8'  => $geoTools->projectPoint(new Point(593443, 2321233, 32648), Srid::fromInt(4326)),
-            'H9_1'  => $geoTools->projectPoint(new Point(584649, 2331729, 32648), Srid::fromInt(4326))
+            'H2_1' => $geoTools->projectPoint(new Point(584451, 2331823, 32648), Srid::fromInt(4326)),
+            'H2_8' => $geoTools->projectPoint(new Point(593249, 2321333, 32648), Srid::fromInt(4326)),
+            'H5_1' => $geoTools->projectPoint(new Point(588440, 2327043, 32648), Srid::fromInt(4326)),
+            'H8_6' => $geoTools->projectPoint(new Point(588829, 2326631, 32648), Srid::fromInt(4326)),
+            'H8_8' => $geoTools->projectPoint(new Point(593443, 2321233, 32648), Srid::fromInt(4326)),
+            'H9_1' => $geoTools->projectPoint(new Point(584649, 2331729, 32648), Srid::fromInt(4326))
         );
         $boundaries = $boundariesFinder->findWellBoundaries($scenarioId);
         /** @var WellBoundary $boundary */

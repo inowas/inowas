@@ -26,6 +26,9 @@ class ConstantHeadBoundaryTest extends \PHPUnit_Framework_TestCase
     /** @var  ConstantHeadBoundary */
     protected $constantHeadBoundary;
 
+    /**
+     * @throws \Exception
+     */
     public function setUp(): void
     {
         /** @var ConstantHeadBoundary $chd */
@@ -130,6 +133,9 @@ class ConstantHeadBoundaryTest extends \PHPUnit_Framework_TestCase
         $this->constantHeadBoundary = $chd;
     }
 
+    /**
+     * @throws \Exception
+     */
     public function test_find_value_by_date_time(): void
     {
         $observationPointId = ObservationPointId::fromString('op1');
@@ -158,11 +164,13 @@ class ConstantHeadBoundaryTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals([404, 304], $value->toArray()['values']);
     }
 
+    /**
+     * @throws \Exception
+     */
     public function test_to_array_from_array(): void
     {
         $arr = $this->constantHeadBoundary->toArray();
         $chd = BoundaryFactory::createFromArray($arr);
-        $this->assertInstanceOf(ConstantHeadBoundary::class, $chd);
         $this->assertEquals($this->constantHeadBoundary, $chd);
     }
 }

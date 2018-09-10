@@ -16,7 +16,7 @@
             "$ref": "geojson/point.json"
         },
         "type": {
-            "type": "String",
+            "type": "string",
             "pattern": "^wel$"
         },
         "affected_layers": {

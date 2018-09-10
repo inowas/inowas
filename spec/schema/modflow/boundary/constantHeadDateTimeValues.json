@@ -16,7 +16,7 @@
                 "minItems": 2,
                 "maxItems": 2,
                 "items": {
-                    "type": "float"
+                    "type": "number"
                 }
             }
         }
